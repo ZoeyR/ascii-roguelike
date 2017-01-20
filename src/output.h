@@ -4,4 +4,5 @@
 #include "dungeon.h"
 void print_room(DungeonRoom *room);
 
+void print_dungeon(Dungeon *dungeon);
 #endif

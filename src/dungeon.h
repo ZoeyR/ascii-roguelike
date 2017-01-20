@@ -3,16 +3,19 @@
 
 #define ROOM_MAX_WIDTH 27
 #define ROOM_MAX_HEIGHT 27
+#define DUNGEON_WIDTH 160
+#define DUNGEON_HEIGHT 105
+
 typedef struct {
     enum {
         ROCK,
-        WALL,
         HALL,
         FLOOR,
         RUBBLE,
         PILLAR
     } type;
     char hardness;
+    int region;
 } DungeonBlock;
 
 typedef struct {
@@ -24,12 +27,13 @@ typedef struct {
 } DungeonRoom;
 
 typedef struct {
+    int regions;
     DungeonBlock blocks[105][160];
 } Dungeon;
 
 // create a new random room with the given paramters. Rooms must be no larget than 25x25
 DungeonRoom create_room(int width, int height);
 
-Dungeon create_dungeon(DungeonRoom *rooms, int len);
+Dungeon create_dungeon(int room_tries, int min_rooms, int hardness);
 
 #endif

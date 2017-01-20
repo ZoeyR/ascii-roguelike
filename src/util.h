@@ -69,4 +69,19 @@ typedef enum  {
 define_result(IntParseResult, int, IntParseError);
 
 IntParseResult parse_int(char* str);
+
+int better_rand(int limit);
+
+typedef struct {
+    int *data;
+    size_t size;
+    size_t capacity;
+} IntList;
+
+IntList init_list(void);
+void destroy_list(IntList *list);
+
+void list_push(IntList *list, int n);
+int list_pop(IntList *list);
+
 #endif
