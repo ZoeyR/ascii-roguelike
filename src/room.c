@@ -39,7 +39,7 @@ static DungeonRoom create_rectangle(int width, int height) {
     for(int row = 0; row < ROOM_MAX_HEIGHT; row++) {
         for(int col = 0; col < ROOM_MAX_WIDTH; col++) {
             char hardness = (rand() % 2) + 1;
-            DungeonBlock block = {.type = ROCK, .hardness = hardness};
+            DungeonBlock block = {.type = ROCK, .hardness = hardness, .region = 0};
             room.blocks[row][col] = block;
         }
     }

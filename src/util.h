@@ -83,5 +83,6 @@ void destroy_list(IntList *list);
 
 void list_push(IntList *list, int n);
 int list_pop(IntList *list);
+void list_shuffle(IntList *list);
 
 #endif

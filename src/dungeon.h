@@ -34,6 +34,8 @@ typedef struct {
 // create a new random room with the given paramters. Rooms must be no larget than 25x25
 DungeonRoom create_room(int width, int height);
 
-Dungeon create_dungeon(int room_tries, int min_rooms, int hardness);
+Dungeon create_dungeon(int room_tries, int min_rooms, int hardness, int windiness, int imperfection_chance);
+
+void merge_regions(Dungeon *dungeon, int extra_hole_chance);
 
 #endif

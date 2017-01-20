@@ -35,3 +35,12 @@ int list_pop(IntList *list) {
     list->size--;
     return list->data[list->size];
 }
+
+void list_shuffle(IntList *list) {
+    for (int i = 0; i < (int)list->size; i++) {
+        int swap = i + better_rand(list->size - i - 1);
+        int tmp = list->data[swap];
+        list->data[swap] = list->data[i];
+        list->data[i] = tmp;
+    }
+}

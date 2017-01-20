@@ -14,9 +14,11 @@ static void generate_veins(Dungeon *dungeon, int hardness);
 static void generate_maze(Dungeon *dungeon, int windiness);
 static bool can_place_room(Dungeon *dungeon, DungeonRoom *room, int col, int row);
 static void place_room(Dungeon *dungeon, DungeonRoom *room, int col, int row);
+static void _fill_maze(Dungeon *dungeon);
 
-Dungeon create_dungeon(int room_tries, int min_rooms, int hardness) {
+Dungeon create_dungeon(int room_tries, int min_rooms, int hardness, int windiness, int imperfection_chance) {
     Dungeon dungeon;
+    dungeon.regions = 0;
     // fill dungeon with random noise
     for(int row = 0; row < DUNGEON_HEIGHT; row++) {
         for(int col = 0; col < DUNGEON_WIDTH; col++) {
@@ -28,7 +30,7 @@ Dungeon create_dungeon(int room_tries, int min_rooms, int hardness) {
                 hardness = (rand() % 2) + 1;
             }
 
-            DungeonBlock block = {.type = ROCK, .hardness = hardness };
+            DungeonBlock block = {.type = ROCK, .hardness = hardness, .region = 0};
             dungeon.blocks[row][col] = block;
         }
     }
@@ -69,23 +71,30 @@ Dungeon create_dungeon(int room_tries, int min_rooms, int hardness) {
     }
 
     // generate maze
-    generate_maze(&dungeon, 20);
-    printf("end generation\n");
+    generate_maze(&dungeon, windiness);
+
+    merge_regions(&dungeon, imperfection_chance);
+
+    _fill_maze(&dungeon);
+
     return dungeon;
 }
 
 static void create_vein(Dungeon *dungeon, int hardness) {
-    int row = rand() % DUNGEON_HEIGHT;
-    int col = rand() % DUNGEON_WIDTH;
+    int row = better_rand(DUNGEON_HEIGHT - 1);
+    int col = better_rand(DUNGEON_WIDTH - 1);
 
-    int last_direction = rand() % 4;
+    int last_direction = better_rand(3);
 
-    while(rand() % 100 < 98) {
+    while(better_rand(99) < 98) {
+        if (dungeon->blocks[row][col].hardness > 3) {
+            break;
+        }
         dungeon->blocks[row][col].hardness = hardness;
 
         // choose next position
-        if (rand() % 100 < 10) {
-            last_direction = rand() % 4;
+        if (better_rand(99) < 10) {
+            last_direction = better_rand(3);
         }
 
         switch(last_direction) {
@@ -129,14 +138,20 @@ static bool can_place_room(Dungeon *dungeon, DungeonRoom *room, int col, int row
     int dungeon_row_end = row + room->height;
     int dungeon_col_end = col + room->width;
 
-    if (dungeon_row_end >= DUNGEON_GEN_HEIGHT || dungeon_col_end >= DUNGEON_GEN_WIDTH) {
+    if (dungeon_row_end > DUNGEON_HEIGHT || dungeon_col_end > DUNGEON_WIDTH) {
         return false;
     }
 
     for (row = dungeon_row_start; row < dungeon_row_end; row++) {
         for (col = dungeon_col_start; col < dungeon_col_end; col++) {
+            int room_row = row - dungeon_row_start + room->start_row;
+            int room_col = col - dungeon_col_start + room->start_col;
             if (dungeon->blocks[row][col].type != ROCK) {
                 return false;
+            }
+
+            if (room->blocks[room_row][room_col].type == ROCK) {
+                continue;
             }
 
             if (col == dungeon_col_start || col == dungeon_col_end - 1
@@ -159,15 +174,17 @@ static void place_room(Dungeon *dungeon, DungeonRoom *room, int col, int row) {
     int dungeon_row_end = row + room->height;
     int dungeon_col_end = col + room->width;
 
-    if (dungeon_row_end >= DUNGEON_GEN_HEIGHT || dungeon_col_end >= DUNGEON_GEN_WIDTH) {
+    if (dungeon_row_end > DUNGEON_HEIGHT || dungeon_col_end > DUNGEON_WIDTH) {
         return;
     }
 
+    dungeon->regions++;
     for (row = dungeon_row_start; row < dungeon_row_end; row++) {
         for (col = dungeon_col_start; col < dungeon_col_end; col++) {
             int room_row = row - dungeon_row_start + room->start_row;
             int room_col = col - dungeon_col_start + room->start_col;
             dungeon->blocks[row][col].type = room->blocks[room_row][room_col].type;
+            dungeon->blocks[row][col].region = dungeon->regions;
         }
     }
 }
@@ -179,14 +196,17 @@ static void generate_maze(Dungeon *dungeon, int windiness) {
                 continue;
             }
 
+            dungeon->regions++;
             // carve this section of the maze
             IntList carved_list = init_list();
             dungeon->blocks[row][col].type = HALL;
+            dungeon->blocks[row][col].region = dungeon->regions;
             list_push(&carved_list, (row * DUNGEON_WIDTH) + col);
 
-            int last_dir = better_rand(3);
+            int last_dir;
             while(carved_list.size > 0) {
                 //print_dungeon(dungeon);
+                list_shuffle(&carved_list);
                 int coord = list_pop(&carved_list);
 
                 // decompose the coordinate
@@ -194,41 +214,70 @@ static void generate_maze(Dungeon *dungeon, int windiness) {
                 int row = coord / DUNGEON_WIDTH;
 
 
-                DungeonBlock *adjacent[4][2] = {{&dungeon->blocks[row - 1][col], &dungeon->blocks[row - 2][col] },
-                                                {&dungeon->blocks[row][col + 1], &dungeon->blocks[row][col + 2] },
-                                                {&dungeon->blocks[row + 1][col], &dungeon->blocks[row + 2][col] },
-                                                {&dungeon->blocks[row][col - 1], &dungeon->blocks[row][col - 2] }};
+                DungeonBlock adjacent[4][2] = {{dungeon->blocks[row - 1][col], dungeon->blocks[row - 2][col] },
+                                                {dungeon->blocks[row][col + 1], dungeon->blocks[row][col + 2] },
+                                                {dungeon->blocks[row + 1][col], dungeon->blocks[row + 2][col] },
+                                                {dungeon->blocks[row][col - 1], dungeon->blocks[row][col - 2] }};
                 
+
+                int carved_index = 0;
+                int total_carved = 0;
+                for (int i = 0; i < 4; i++) {
+                    DungeonBlock block_a = adjacent[i][0];
+                    DungeonBlock block_b = adjacent[i][1];
+                    if(block_a.type != ROCK && block_b.type != ROCK) {
+                        total_carved++;
+                        carved_index = i;
+                    }
+                }
+
+                // calculate the last direction
+                if (total_carved == 1) {
+                    switch (carved_index) {
+                        default:
+                        case 0:
+                            last_dir = 3;
+                            break;
+                        case 1:
+                            last_dir = 4;
+                            break;
+                        case 2:
+                            last_dir = 0;
+                            break;
+                        case 3:
+                            last_dir = 1;
+                            break;
+                    }
+                } else {
+                    last_dir = better_rand(3);
+                }
+
                 int lowest_weight = INT_MAX;
                 int lowest_weight_index = 0;
                 bool can_carve[4] = {false, false, false, false};
                 for (int i = 0; i < 4; i++) {
-                    DungeonBlock *block_a = adjacent[i][0];
-                    DungeonBlock *block_b = adjacent[i][1];
-                    can_carve[i] = (block_a->hardness < 4 && block_a->type == ROCK) && (block_b->hardness < 4 && block_b->type == ROCK);
+                    DungeonBlock block_a = adjacent[i][0];
+                    DungeonBlock block_b = adjacent[i][1];
+                    if((block_a.hardness < 4 && block_a.type == ROCK) && (block_b.hardness < 4 && block_b.type == ROCK)) {
+                        can_carve[i] = true;
+                        int weight = block_a.hardness + block_b.hardness;
+                        if (i == last_dir) {
+                            weight -= 4;
+                        }
 
-                    if (!can_carve[i]) {
-                        continue;
-                    }
-
-                    int weight = block_a->hardness + block_b->hardness;
-                    if (i == last_dir) {
-                        weight -= 2;
-                    }
-
-                    if (weight < lowest_weight) {
-                        lowest_weight = weight;
-                        lowest_weight_index = i;
+                        if (weight < lowest_weight) {
+                            lowest_weight = weight;
+                            lowest_weight_index = i;
+                        }
                     }
                 }
                 
                 if (lowest_weight == INT_MAX) {
-                    last_dir = better_rand(3);
                     continue;
                 }
 
                 int next_dir;
-                if (better_rand(100) > windiness && can_carve[lowest_weight_index]) {
+                if (better_rand(99) + 1 > windiness && can_carve[lowest_weight_index]) {
                     next_dir = lowest_weight_index;
                 } else {
                     do {
@@ -260,12 +309,49 @@ static void generate_maze(Dungeon *dungeon, int windiness) {
 
                 dungeon->blocks[coord_a / DUNGEON_WIDTH][coord_a % DUNGEON_WIDTH].type = HALL;
                 dungeon->blocks[coord_b / DUNGEON_WIDTH][coord_b % DUNGEON_WIDTH].type = HALL;
-                
-                last_dir = next_dir;
+                dungeon->blocks[coord_a / DUNGEON_WIDTH][coord_a % DUNGEON_WIDTH].region = dungeon->regions;
+                dungeon->blocks[coord_b / DUNGEON_WIDTH][coord_b % DUNGEON_WIDTH].region = dungeon->regions;
                 list_push(&carved_list, coord);
                 list_push(&carved_list, coord_b);
             }
+
             destroy_list(&carved_list);
+        }
+    }
+}
+
+static void _fill_maze_helper(Dungeon *dungeon, int row, int col) {
+    int right = (col >= DUNGEON_WIDTH - 1) ? col : col + 1;
+    int left = (col <= 0) ? 0 : col - 1;
+    int top = (row <= 0) ? 0 : row - 1;
+    int bottom = (row >= DUNGEON_HEIGHT - 1) ? row : row + 1;
+
+    int total_open = 0;
+    int last_open_col = 0;
+    int last_open_row = 0;
+    int adjacent[4][2] = {{top, col},
+                                {row, right},
+                                {bottom, col},
+                                {row, left}};
+    
+    for (int i = 0; i < 4; i++) {
+        if (dungeon->blocks[adjacent[i][0]][adjacent[i][1]].type != ROCK) {
+            total_open++;
+            last_open_row = adjacent[i][0];
+            last_open_col = adjacent[i][1];
+        }
+    }
+
+    if (total_open == 1) {
+        dungeon->blocks[row][col].type = ROCK;
+        _fill_maze_helper(dungeon, last_open_row, last_open_col);
+    }
+}
+
+static void _fill_maze(Dungeon *dungeon) {
+    for(int row = 0; row < DUNGEON_HEIGHT; row++) {
+        for(int col = 0; col < DUNGEON_WIDTH; col++) {
+            _fill_maze_helper(dungeon, row, col);
         }
     }
 }
