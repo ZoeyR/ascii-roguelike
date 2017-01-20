@@ -22,10 +22,10 @@ static void print_s_hardness(char c, char hardness);
 void print_dungeon(Dungeon *dungeon) {
     for(int row = 0; row < DUNGEON_HEIGHT; row++) {
         for(int col = 0; col < DUNGEON_WIDTH; col++) {
-            int right = (col >= ROOM_MAX_WIDTH - 1) ? 0 : col + 1;
-            int left = (col <= 0) ? ROOM_MAX_WIDTH - 1 : col - 1;
-            int top = (row <= 0) ? ROOM_MAX_HEIGHT - 1 : row - 1;
-            int bottom = (row >= ROOM_MAX_HEIGHT - 1) ? 0 : row + 1;
+            int right = (col >= DUNGEON_WIDTH - 1) ? 0 : col + 1;
+            int left = (col <= 0) ? DUNGEON_WIDTH - 1 : col - 1;
+            int top = (row <= 0) ? DUNGEON_HEIGHT - 1 : row - 1;
+            int bottom = (row >= DUNGEON_HEIGHT - 1) ? 0 : row + 1;
             bool visible = false;
 
             visible |= dungeon->blocks[top][left].type != ROCK;
@@ -37,7 +37,7 @@ void print_dungeon(Dungeon *dungeon) {
             visible |= dungeon->blocks[bottom][col].type != ROCK;
             visible |= dungeon->blocks[bottom][right].type != ROCK;
 
-            print_block(dungeon->blocks[row][col], true);
+            print_block(dungeon->blocks[row][col], visible);
         }
         printf("\n");
     }
@@ -61,7 +61,7 @@ void print_room(DungeonRoom *room) {
             visible |= room->blocks[bottom][col].type != ROCK;
             visible |= room->blocks[bottom][right].type != ROCK;
 
-            print_block(room->blocks[row][col], true);
+            print_block(room->blocks[row][col], visible);
         }
         printf("\n");
     }
@@ -79,10 +79,10 @@ static void print_block(DungeonBlock block, bool visible) {
             }
             return;
         case HALL:
-            c = ',';
+            c = ':';
             break;
         case FLOOR:
-            c = '+';
+            c = '.';
             break;
         case RUBBLE:
             c = 'r';
