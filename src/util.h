@@ -56,6 +56,12 @@
 #define ok(val) {{.ok = val}, OK}
 #define err(e) {{.err = e}, ERR}
 
+#define relative_array(distance, row, col, height, width, postfix) \
+    int right##postfix = (col >= width - distance) ? col : col + distance; \
+    int left##postfix = (col < 0 + distance) ? 0 : col - distance; \
+    int top##postfix = (row < 0 + distance) ? 0 : row - distance; \
+    int bottom##postfix = (row >= height - distance) ? row : row + distance \
+
 enum ResultTag {
     OK = 0,
     ERR = 1,

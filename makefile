@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -ggdb 
+CFLAGS = -Wall -Wextra -lm -ggdb 
 SOURCEDIR = src
 OBJECTDIR = obj
 SOURCES = $(wildcard $(SOURCEDIR)/*.c)

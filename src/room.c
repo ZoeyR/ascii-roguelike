@@ -1,8 +1,9 @@
 #include "dungeon.h"
 #include <stdlib.h>
+#include <math.h>
 
 static DungeonRoom create_rectangle(int width, int height);
-//static DungeonRoom create_ellipse(int width, int height);
+static DungeonRoom create_ellipse(int width, int height);
 static void decorate_room(DungeonRoom *room);
 
 DungeonRoom create_room(int width, int height) {
@@ -15,7 +16,7 @@ DungeonRoom create_room(int width, int height) {
             room = create_rectangle(width, height);
             break;
         case 1:
-            room = create_rectangle(width, height);
+            room = create_ellipse(width, height);
             break;
     }
 
@@ -39,7 +40,7 @@ static DungeonRoom create_rectangle(int width, int height) {
     for(int row = 0; row < ROOM_MAX_HEIGHT; row++) {
         for(int col = 0; col < ROOM_MAX_WIDTH; col++) {
             char hardness = (rand() % 2) + 1;
-            DungeonBlock block = {.type = ROCK, .hardness = hardness, .region = 0};
+            DungeonBlock block = {.type = ROCK, .hardness = hardness, .region = 0, .immutable = false};
             room.blocks[row][col] = block;
         }
     }
@@ -53,6 +54,50 @@ static DungeonRoom create_rectangle(int width, int height) {
                 type = ROCK;
             } else {
                 type = FLOOR;
+            }
+
+            room.blocks[row][col].type = type;
+        }
+    }
+
+    // finally decorate the room
+    decorate_room(&room);
+
+    return room;
+}
+
+static DungeonRoom create_ellipse(int width, int height) {
+    int start_row = (ROOM_MAX_HEIGHT/2) - (height / 2);
+    int start_col = (ROOM_MAX_WIDTH/2) - (width / 2);
+
+    DungeonRoom room;
+    room.start_row = start_row;
+    room.start_col = start_col;
+    room.width = width;
+    room.height = height;
+
+    // first fill the room with rock
+    for(int row = 0; row < ROOM_MAX_HEIGHT; row++) {
+        for(int col = 0; col < ROOM_MAX_WIDTH; col++) {
+            char hardness = (rand() % 2) + 1;
+            DungeonBlock block = {.type = ROCK, .hardness = hardness, .region = 0, .immutable = false};
+            room.blocks[row][col] = block;
+        }
+    }
+
+    double x_radius_2 = pow(width/2, 2.0);
+    double y_radius_2 = pow(height/2, 2.0);
+
+    for(int row = 0; row < ROOM_MAX_HEIGHT; row++) {
+        for(int col = 0; col < ROOM_MAX_WIDTH; col++) {
+            char type;
+            double x_2 = pow(col - (ROOM_MAX_WIDTH / 2), 2.0);
+            double y_2 = pow(row - (ROOM_MAX_HEIGHT / 2), 2.0);
+
+            if (((x_2/x_radius_2) + (y_2/y_radius_2)) < 1) {
+                type = FLOOR;
+            } else {
+                type = ROCK;
             }
 
             room.blocks[row][col].type = type;

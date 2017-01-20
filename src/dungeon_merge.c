@@ -41,6 +41,7 @@ static void _list_push(ConnectorList *list, Connector n);
 static Connector _list_pop(ConnectorList *list);
 static void _list_shuffle(ConnectorList *list);
 static bool _make_connector(Dungeon *dungeon, Connector *connector);
+static void _flood_fill(Dungeon *dungeon, int col, int row, int target, int replacement);
 
 void merge_regions(Dungeon *dungeon, int extra_hole_chance) {
     int regions = dungeon->regions;
@@ -60,7 +61,7 @@ void merge_regions(Dungeon *dungeon, int extra_hole_chance) {
                 int row = connector.regions[0].row;
                 int region = dungeon->blocks[row][col].region;
                 _list_push(&trackers[region - 1].list, connector);
-
+                
                 col = connector.regions[1].col;
                 row = connector.regions[1].row;
                 region = dungeon->blocks[row][col].region;
@@ -82,21 +83,20 @@ void merge_regions(Dungeon *dungeon, int extra_hole_chance) {
             col_a = connector.regions[0].col;
             row_b = connector.regions[1].row;
             col_b = connector.regions[1].col;
-            if (!trackers[dungeon->blocks[row_a][col_a].region - 1].merged) {
+
+            if (dungeon->blocks[row_a][col_a].region != dungeon->blocks[row_b][col_b].region) {
+                int replacement = dungeon->blocks[row_a][col_a].region;
+                int target = dungeon->blocks[row_b][col_b].region;
+                dungeon->blocks[connector.row][connector.col].region = target;
                 dungeon->blocks[connector.row][connector.col].type = HALL;
-                trackers[dungeon->blocks[row_a][col_a].region - 1].merged = true;
+                
+                // flood fill the region to the same region, doesnt matter which one
+                _flood_fill(dungeon, connector.row, connector.col, target, replacement);
                 dungeon->regions--;
                 continue;
             }
 
-            if (!trackers[dungeon->blocks[row_b][col_b].region - 1].merged) {
-                dungeon->blocks[connector.row][connector.col].type = HALL;
-                trackers[dungeon->blocks[row_b][col_b].region - 1].merged = true;
-                dungeon->regions--;
-                continue;
-            }
-
-            if (better_rand(99) < extra_hole_chance) {
+            if (better_rand(extra_hole_chance) == 0) {
                 dungeon->blocks[connector.row][connector.col].type = HALL;
             }
         }
@@ -118,28 +118,26 @@ static bool _make_connector(Dungeon *dungeon, Connector *connector) {
         return false;
     }
 
-    int right = (col >= DUNGEON_WIDTH - 1) ? col : col + 1;
-    int left = (col <= 0) ? 0 : col - 1;
-    int top = (row <= 0) ? 0 : row - 1;
-    int bottom = (row >= DUNGEON_HEIGHT - 1) ? row : row + 1;
+    relative_array(1, row, col, DUNGEON_HEIGHT, DUNGEON_WIDTH, );
 
-    DungeonBlock adjacent[4] = {dungeon->blocks[top][col],
-                                dungeon->blocks[row][right],
-                                dungeon->blocks[bottom][col],
-                                dungeon->blocks[row][left]};
+    int adjacent[4][2] = {  {top, col},
+                            {row, right},
+                            {bottom, col},
+                            {row, left}};
 
     int region_a = -1;
     int region_b = -1;
     for (int i = 0; i < 4; i++) {
-        if (adjacent[i].type != ROCK) {
+        DungeonBlock block = dungeon->blocks[adjacent[i][0]][adjacent[i][1]];
+        if (block.type != ROCK) {
             if (region_a == -1) {
-                region_a = adjacent[i].region;
-                connector->regions[0].row = top;
-                connector->regions[0].col = col;
-            } else if (adjacent[i].region != region_a) {
-                region_b = adjacent[i].region;
-                connector->regions[1].row = top;
-                connector->regions[1].col = col;
+                region_a = block.region;
+                connector->regions[0].row = adjacent[i][0];
+                connector->regions[0].col = adjacent[i][1];
+            } else if (block.region != region_a) {
+                region_b = block.region;
+                connector->regions[1].row = adjacent[i][0];
+                connector->regions[1].col = adjacent[i][1];
             }
         }
     }
@@ -190,4 +188,23 @@ static void _list_push(ConnectorList *list, Connector n) {
 static Connector _list_pop(ConnectorList *list) {
     list->size--;
     return list->data[list->size];
+}
+
+static void _flood_fill(Dungeon *dungeon, int row, int col, int target, int replacement) {
+    if (target == replacement) {
+        return;
+    }
+
+    if (dungeon->blocks[row][col].region != target) {
+        return;
+    }
+
+    dungeon->blocks[row][col].region = replacement;
+
+    relative_array(1, row, col, DUNGEON_HEIGHT, DUNGEON_WIDTH, );
+
+    _flood_fill(dungeon, top, col, target, replacement);
+    _flood_fill(dungeon, row, right, target, replacement);
+    _flood_fill(dungeon, bottom, col, target, replacement);
+    _flood_fill(dungeon, row, left, target, replacement);
 }

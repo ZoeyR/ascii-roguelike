@@ -16,8 +16,8 @@
 #define HARDNESS_4 "\033[31;40m%c\033[0m"
 
 static void print_block(DungeonBlock block, bool visible);
-static void print_hardness(char c, char hardness);
-static void print_s_hardness(char c, char hardness);
+static void print_hardness(char c, DungeonBlock block);
+static void print_s_hardness(char c, DungeonBlock block);
 
 void print_dungeon(Dungeon *dungeon) {
     for(int row = 0; row < DUNGEON_HEIGHT; row++) {
@@ -37,7 +37,7 @@ void print_dungeon(Dungeon *dungeon) {
             visible |= dungeon->blocks[bottom][col].type != ROCK;
             visible |= dungeon->blocks[bottom][right].type != ROCK;
 
-            print_block(dungeon->blocks[row][col], visible);
+            print_block(dungeon->blocks[row][col], true);
         }
         printf("\n");
     }
@@ -73,7 +73,7 @@ static void print_block(DungeonBlock block, bool visible) {
         default:
         case ROCK:
             if (visible) {
-                print_s_hardness(' ', block.hardness);
+                print_s_hardness(' ', block);
             } else {
                 printf(" ");
             }
@@ -91,11 +91,15 @@ static void print_block(DungeonBlock block, bool visible) {
             c = 'I';
             break;
     }
-    print_hardness(c, block.hardness);
+    print_hardness(c, block);
 }
 
-static void print_s_hardness(char c, char hardness) {
-    switch(hardness) {
+static void print_s_hardness(char c, DungeonBlock block) {
+    if (block.immutable) {
+        printf(S_HARDNESS_4, c);
+        return;
+    }
+    switch(block.hardness) {
         default:
         case 0:
             printf(S_HARDNESS_0, c);
@@ -115,8 +119,12 @@ static void print_s_hardness(char c, char hardness) {
     }
 }
 
-static void print_hardness(char c, char hardness) {
-    switch(hardness) {
+static void print_hardness(char c, DungeonBlock block) {
+    if (block.immutable) {
+        printf(S_HARDNESS_4, c);
+        return;
+    }
+    switch(block.hardness) {
         default:
         case 0:
             printf(HARDNESS_0, c);
