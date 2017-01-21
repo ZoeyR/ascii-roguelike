@@ -11,12 +11,12 @@
 #define DUNGEON_GEN_WIDTH 159
 #define DUNGEON_GEN_HEIGHT 105
 
-static void generate_veins(Dungeon *dungeon, int hardness, int liklihood);
-static void generate_maze(Dungeon *dungeon, int windiness, int max_maze_size);
-static bool can_place_room(Dungeon *dungeon, DungeonRoom *room, int col, int row);
-static void place_room(Dungeon *dungeon, DungeonRoom *room, int col, int row);
+static void _generate_veins(Dungeon *dungeon, int hardness, int liklihood);
+static void _generate_maze(Dungeon *dungeon, int windiness, int max_maze_size);
+static bool _can_place_room(Dungeon *dungeon, DungeonRoom *room, int col, int row);
+static void _place_room(Dungeon *dungeon, DungeonRoom *room, int col, int row);
 static void _fill_maze(Dungeon *dungeon);
-static void unfreeze_rooms(Dungeon *dungeon);
+static void _unfreeze_rooms(Dungeon *dungeon);
 
 Dungeon create_dungeon(int room_tries, int min_rooms, int hardness, int windiness, int max_maze_size, int imperfection_chance) {
     Dungeon dungeon;
@@ -39,13 +39,10 @@ Dungeon create_dungeon(int room_tries, int min_rooms, int hardness, int windines
             dungeon.blocks[row][col] = block;
         }
     }
-    print_dungeon(&dungeon);
-    scanf("%s", (char[]){' ', ' ', ' '});
 
     // create veins of hard and soft rock
-    generate_veins(&dungeon, hardness, 300);
-    print_dungeon(&dungeon);
-    scanf("%s", (char[]){' ', ' ', ' '});
+    _generate_veins(&dungeon, hardness, 300);
+
     // generate enough rooms for the dungeon to be reasonably filled
     int rooms = 0;
     int tries = 0;
@@ -70,33 +67,27 @@ Dungeon create_dungeon(int room_tries, int min_rooms, int hardness, int windines
         int col = (better_rand((DUNGEON_GEN_WIDTH - width) / 2) * 2);
         int row = (better_rand((DUNGEON_GEN_HEIGHT - height) / 2) * 2);
 
-        if (!can_place_room(&dungeon, &room, col, row)) {
+        if (!_can_place_room(&dungeon, &room, col, row)) {
             continue;
         } else {
-            place_room(&dungeon, &room, col, row);
+            _place_room(&dungeon, &room, col, row);
             rooms++;
         }
     }
 
-    print_dungeon(&dungeon);
-    scanf("%s", (char[]){' ', ' ', ' '});
     // generate maze
-    generate_maze(&dungeon, windiness, max_maze_size);
-    print_dungeon(&dungeon);
-    scanf("%s", (char[]){' ', ' ', ' '});
+    _generate_maze(&dungeon, windiness, max_maze_size);
 
     // since the maze is now generated rooms can be unfrozen
-    unfreeze_rooms(&dungeon);
+    _unfreeze_rooms(&dungeon);
 
     merge_regions(&dungeon, imperfection_chance);
-    print_dungeon(&dungeon);
-    scanf("%s", (char[]){' ', ' ', ' '});
 
     _fill_maze(&dungeon);
     return dungeon;
 }
 
-static void create_vein(Dungeon *dungeon, int hardness, int row, int col) {
+static void _create_vein(Dungeon *dungeon, int hardness, int row, int col) {
     if (row % 2 != 0 || col % 2 != 0) {
         return;
     }
@@ -148,7 +139,7 @@ static void create_vein(Dungeon *dungeon, int hardness, int row, int col) {
     }
 }
 
-static void generate_veins(Dungeon *dungeon, int hardness, int likelihood) {
+static void _generate_veins(Dungeon *dungeon, int hardness, int likelihood) {
     
     for(int row = 2; row < DUNGEON_WIDTH; row += 2) {
         for(int col = 2; col < DUNGEON_HEIGHT; col += 2) {
@@ -157,15 +148,15 @@ static void generate_veins(Dungeon *dungeon, int hardness, int likelihood) {
             }
 
             if (better_rand(99) < hardness) {
-                create_vein(dungeon, 3, row, col);
+                _create_vein(dungeon, 3, row, col);
             } else {
-                create_vein(dungeon, 0, row, col);
+                _create_vein(dungeon, 0, row, col);
             }
         }
     }
 }
 
-static bool can_place_room(Dungeon *dungeon, DungeonRoom *room, int col, int row) {
+static bool _can_place_room(Dungeon *dungeon, DungeonRoom *room, int col, int row) {
     int dungeon_row_start = row;
     int dungeon_col_start = col;    
     int dungeon_row_end = row + room->height;
@@ -198,7 +189,7 @@ static bool can_place_room(Dungeon *dungeon, DungeonRoom *room, int col, int row
     return true;
 }
 
-static void place_room(Dungeon *dungeon, DungeonRoom *room, int col, int row) {
+static void _place_room(Dungeon *dungeon, DungeonRoom *room, int col, int row) {
     int dungeon_row_start = row;
     int dungeon_col_start = col;
     int dungeon_row_end = row + room->height;
@@ -222,7 +213,7 @@ static void place_room(Dungeon *dungeon, DungeonRoom *room, int col, int row) {
     }
 }
 
-static void generate_maze(Dungeon *dungeon, int windiness, int max_maze_size) {
+static void _generate_maze(Dungeon *dungeon, int windiness, int max_maze_size) {
     for (int row = 1; row < DUNGEON_GEN_HEIGHT; row += 2) {
         for (int col = 1; col < DUNGEON_GEN_WIDTH; col += 2) {
             if (dungeon->blocks[row][col].type != ROCK || dungeon->blocks[row][col].immutable || 
@@ -371,7 +362,7 @@ static void _fill_maze(Dungeon *dungeon) {
     }
 }
 
-static void unfreeze_rooms(Dungeon *dungeon) {
+static void _unfreeze_rooms(Dungeon *dungeon) {
     for(int row = 1; row < DUNGEON_HEIGHT - 1; row++) {
         for(int col = 1; col < DUNGEON_WIDTH - 1; col++) {
             dungeon->blocks[row][col].immutable = false;
