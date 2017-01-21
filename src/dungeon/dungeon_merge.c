@@ -1,8 +1,8 @@
-#include "dungeon.h"
-#include "util.h"
 #include <stdbool.h>
 #include <stdlib.h>
 
+#include <dungeon/dungeon.h>
+#include <util/util.h>
 // comments for merging dungeon
 // create array with indicies being region numbers and values being a list of connectors and flag of merged
 // for each region in list:
@@ -11,7 +11,7 @@
 // * while there are connectors in list
 //   * pop connector in list
 //   * if connector connects to a non-merged region, merge
-//   * to merge, turn connector into hall tile, then mark the connected region as merged
+//   * to merge, turn connector into hall tile, then flood fill the region
 //   * small chance to open a connector even if connects to merged region, makes dungeon imperfect.
 
 typedef struct {

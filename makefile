@@ -1,10 +1,10 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -lm -ggdb 
+CFLAGS = -Wall -Wextra -lm -ggdb -Isrc
 SOURCEDIR = src
 OBJECTDIR = obj
-SOURCES = $(wildcard $(SOURCEDIR)/*.c)
-HEADERS = $(wildcard $(SOURCEDIR)/*.h)
-OBJECTS = $(patsubst $(SOURCEDIR)/%.c, $(OBJECTDIR)/%.o,$(SOURCES))
+SOURCES = $(wildcard $(SOURCEDIR)/*.c) $(wildcard $(SOURCEDIR)/**/*.c)
+HEADERS = $(wildcard $(SOURCEDIR)/*.h) $(wildcard $(SOURCEDIR)/**/*.h)
+OBJECTS = $(patsubst $(SOURCEDIR)/%.c, $(OBJECTDIR)/%.o, $(SOURCES))
 TARGET = outfile
 
 $(warning $(SOURCES))

@@ -1,7 +1,8 @@
 #include <stdio.h>
-#include "dungeon.h"
-#include "output.h"
-#include "stdbool.h"
+#include <stdbool.h>
+
+#include <dungeon/dungeon.h>
+#include <output.h>
 
 #define S_HARDNESS_0 "\033[1;7;33;40m%c\033[0m"
 #define S_HARDNESS_1 "\033[1;7;37;40m%c\033[0m"

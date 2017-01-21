@@ -1,6 +1,8 @@
-#include "dungeon.h"
 #include <stdlib.h>
 #include <math.h>
+
+#include <dungeon/dungeon.h>
+#include <util/util.h>
 
 static DungeonRoom create_rectangle(int width, int height);
 static DungeonRoom create_ellipse(int width, int height);
@@ -8,7 +10,7 @@ static void decorate_room(DungeonRoom *room);
 
 DungeonRoom create_room(int width, int height) {
     // Determine the type of room to make, currently ellipse and rectangle
-    int choice = rand() % 2;
+    int choice = better_rand(1);
     DungeonRoom room;
     switch(choice) {
         default:
