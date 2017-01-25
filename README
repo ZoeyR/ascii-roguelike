@@ -1,0 +1,19 @@
+The dungeon generation in this code follows the specification outlined in the
+project with a few added features. The dungeon itself is 160x105 with an
+immutable barrier around the outside. 
+
+Rooms are attempted to be placed in the dungeon until there are at least 10
+rooms and 1000 attempts have been made to place rooms. Room minimum size is 
+13x9, the specified minimum of 7x5 seemed too small. Rooms have the added
+decoration of pillars being placed if the room is too large.
+
+After rooms are generated a perfect maze (no loops) is created. The maze is
+then joined together with the rooms (occasinally creating a loop) until there
+is one connected unit. Dead ends are then trimmed. This ensures that the
+dungeon is fully connected and corrodors will not extend into rooms.
+
+The dungeon is displayed with "." for room blocks, "I" for pillars, ":" for
+corrodors, and colored spaces for rock. If the rock is not adjacent to an open
+area it is painted as a black space. Otherwise it is painted with a space
+according to hardness. 0=Yellow, 1=White, 2=Light Gray, 3=Dark Gray, 
+4/Immutable=Red.  

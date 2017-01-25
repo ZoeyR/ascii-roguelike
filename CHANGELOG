@@ -1,0 +1,30 @@
+2017-1-19
+---------
+* Rectangular room generation
+* Room printing
+* Colored printing
+* Dungeon data structures defined
+
+2017-1-20
+---------
+* Working maze generation
+* Dungeon printing
+* Better random number generation
+* Region merging implemented
+* Elliptical room generation
+* Bug: Region merging does not merge regions in some cases
+* Fixed merge bug with flood fill algorithm
+
+2017-1-21
+---------
+* Reorganize the project to use subfolders
+* Modify vein spawning algorithm
+* Make binary compliant with specs (no longer needs command line args)
+
+2017-1-23
+---------
+* Use dependency rules in makefile
+
+2017-1-24
+---------
+* Fix loop index out of bounds error
