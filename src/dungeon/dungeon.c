@@ -141,8 +141,8 @@ static void _create_vein(Dungeon *dungeon, int hardness, int row, int col) {
 
 static void _generate_veins(Dungeon *dungeon, int hardness, int likelihood) {
     
-    for(int row = 2; row < DUNGEON_WIDTH; row += 2) {
-        for(int col = 2; col < DUNGEON_HEIGHT; col += 2) {
+    for(int row = 2; row < DUNGEON_HEIGHT; row += 2) {
+        for(int col = 2; col < DUNGEON_WIDTH; col += 2) {
             if (dungeon->blocks[row][col].immutable || better_rand(likelihood) != 0) {
                 continue;
             }
