@@ -25,9 +25,7 @@ int main(int argc, char *argv[]) {
     int max_maze_size = 2000;
     int imperfection = 2000;
     Options options = parse_args(argc, argv);
-
-    printf("save: %d, load: %d\npath: %s", options.save, options.load, options.path);
-
+    
     Dungeon dungeon;
     if (options.load) {
         dungeon = load_dungeon(options.path);
