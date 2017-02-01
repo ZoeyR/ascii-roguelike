@@ -2,6 +2,7 @@
 #define ROOM_H
 
 #include <stdbool.h>
+#include <stdint.h>
 
 #define ROOM_MAX_WIDTH 27
 #define ROOM_MAX_HEIGHT 27
@@ -16,7 +17,7 @@ typedef struct {
         RUBBLE,
         PILLAR
     } type;
-    char hardness;
+    uint8_t hardness;
     int region;
     bool immutable;
 } DungeonBlock;

@@ -3,9 +3,11 @@
 #include <stdio.h>
 #include <time.h>
 #include <getopt.h>
+#include <string.h>
+#include <sys/stat.h>
 
 #include <dungeon/dungeon.h>
-#include <output.h>
+#include <io.h>
 
 typedef struct {
     int save;
@@ -24,9 +26,30 @@ int main(int argc, char *argv[]) {
     Options options = parse_args(argc, argv);
 
     printf("save: %d, load: %d\n", options.save, options.load);
-    Dungeon dungeon = create_dungeon(room_tries, min_rooms, hardness, windiness, max_maze_size, imperfection);
+
+    Dungeon dungeon;
+    if (options.load) {
+        char path[256];
+        strcpy(path, getenv("HOME"));
+        strcat(path, "/.rlg327/");
+        mkdir(path, 0777);
+        strcat(path, "dungeon");
+        
+        dungeon = load_dungeon(path);
+    } else {
+        dungeon = create_dungeon(room_tries, min_rooms, hardness, windiness, max_maze_size, imperfection);
+    }
 
     print_dungeon(&dungeon);
+    if (options.save) {
+        char path[256];
+        strcpy(path, getenv("HOME"));
+        strcat(path, "/.rlg327/");
+        mkdir(path, 0777);
+        strcat(path, "dungeon");
+
+        save_dungeon(&dungeon, path);
+    }
 }
 
 Options parse_args(int argc, char *argv[]) {

@@ -5,7 +5,7 @@
 #include <stdio.h>
 
 #include <dungeon/dungeon.h>
-#include <output.h>
+#include <io.h>
 #include <util/util.h>
 
 #define DUNGEON_GEN_WIDTH 159
@@ -28,10 +28,10 @@ Dungeon create_dungeon(int room_tries, int min_rooms, int hardness, int windines
             bool immutable;
             if (col == 0 || col == DUNGEON_WIDTH - 1 || 
                     row == 0 || row == DUNGEON_HEIGHT - 1) {
-                hardness = 4;
+                hardness = 255;
                 immutable = true;
             } else {
-                hardness = better_rand(1) + 1;
+                hardness = better_rand(1) + 2;
                 immutable = false;
             }
 
@@ -148,9 +148,9 @@ static void _generate_veins(Dungeon *dungeon, int hardness, int likelihood) {
             }
 
             if (better_rand(99) < hardness) {
-                _create_vein(dungeon, 3, row, col);
+                _create_vein(dungeon, 4, row, col);
             } else {
-                _create_vein(dungeon, 0, row, col);
+                _create_vein(dungeon, 1, row, col);
             }
         }
     }
@@ -171,7 +171,7 @@ static bool _can_place_room(Dungeon *dungeon, DungeonRoom *room, int col, int ro
             int room_row = row - dungeon_row_start + room->start_row;
             int room_col = col - dungeon_col_start + room->start_col;
             if (dungeon->blocks[row][col].type != ROCK || dungeon->blocks[row][col].immutable || 
-            dungeon->blocks[row][col].hardness > 2 || dungeon->blocks[row][col].hardness < 1) {
+            dungeon->blocks[row][col].hardness > 3 || dungeon->blocks[row][col].hardness < 2) {
                 return false;
             }
 
@@ -217,7 +217,7 @@ static void _generate_maze(Dungeon *dungeon, int windiness, int max_maze_size) {
     for (int row = 1; row < DUNGEON_GEN_HEIGHT; row += 2) {
         for (int col = 1; col < DUNGEON_GEN_WIDTH; col += 2) {
             if (dungeon->blocks[row][col].type != ROCK || dungeon->blocks[row][col].immutable || 
-            dungeon->blocks[row][col].hardness > 2 || dungeon->blocks[row][col].hardness < 1) {
+            dungeon->blocks[row][col].hardness > 3 || dungeon->blocks[row][col].hardness < 2) {
                 continue;
             }
 
@@ -275,8 +275,8 @@ static void _generate_maze(Dungeon *dungeon, int windiness, int max_maze_size) {
                 for (int i = 0; i < 4; i++) {
                     DungeonBlock block_a = dungeon->blocks[adjacent[i][0][0]][adjacent[i][0][1]];
                     DungeonBlock block_b = dungeon->blocks[adjacent[i][1][0]][adjacent[i][1][1]];
-                    if((!block_a.immutable && block_a.type == ROCK && block_a.hardness < 3 && block_a.hardness > 0) && 
-                    (!block_b.immutable && block_b.type == ROCK && block_b.hardness < 3 && block_a.hardness > 0)) {
+                    if((!block_a.immutable && block_a.type == ROCK && block_a.hardness < 4 && block_a.hardness > 1) && 
+                    (!block_b.immutable && block_b.type == ROCK && block_b.hardness < 4 && block_a.hardness > 1)) {
                         can_carve[i] = true;
                         int weight = block_a.hardness + block_b.hardness;
                         if (i == last_dir) {
