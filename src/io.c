@@ -47,7 +47,7 @@ void print_dungeon(Dungeon *dungeon) {
             visible |= dungeon->blocks[bottom][col].type != ROCK;
             visible |= dungeon->blocks[bottom][right].type != ROCK;
 
-            print_block(dungeon->blocks[row][col], true);
+            print_block(dungeon->blocks[row][col], visible);
         }
         printf("\n");
     }
