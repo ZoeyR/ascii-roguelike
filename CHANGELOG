@@ -28,3 +28,9 @@
 2017-1-24
 ---------
 * Fix loop index out of bounds error
+
+2017-2-1
+--------
+* Implement argument parsing
+* Create basic save/load feature
+* Implement extensions to save/load
