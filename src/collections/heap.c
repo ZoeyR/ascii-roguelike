@@ -1,6 +1,6 @@
-#include <util/heap.h>
+#include <collections/heap.h>
+#include <collections/list.h>
 #include <util/util.h>
-#include <util/list.h>
 
 static size_t _parent_index(size_t index);
 static size_t _left_child_index(Heap *heap, size_t index);

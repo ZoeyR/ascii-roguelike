@@ -7,7 +7,7 @@
 #include <dungeon/dungeon.h>
 #include <io.h>
 #include <util/util.h>
-#include <util/list.h>
+#include <collections/list.h>
 
 static void _generate_veins(Dungeon *dungeon, int hardness, int liklihood);
 static void _generate_maze(Dungeon *dungeon, int windiness, int max_maze_size);
@@ -217,6 +217,11 @@ static void _place_room(Dungeon *dungeon, DungeonRoom *room, int col, int row) {
 }
 
 static void _generate_maze(Dungeon *dungeon, int windiness, int max_maze_size) {
+    typedef struct {
+        int row;
+        int col;
+    } Coord;
+
     for (int row = 1; row < DUNGEON_HEIGHT; row += 2) {
         for (int col = 1; col < DUNGEON_WIDTH; col += 2) {
             if (dungeon->blocks[row][col].type != ROCK || dungeon->blocks[row][col].immutable || 
@@ -226,21 +231,20 @@ static void _generate_maze(Dungeon *dungeon, int windiness, int max_maze_size) {
 
             dungeon->regions++;
             // carve this section of the maze
-            List carved_list = init_list(sizeof(int));
+            List carved_list = init_list(sizeof(Coord));
             dungeon->blocks[row][col].type = HALL;
             dungeon->blocks[row][col].region = dungeon->regions;
 
-            int to_push = (row * DUNGEON_WIDTH) + col;
-            list_push(&carved_list, (void *)&to_push);
+            list_push(&carved_list, (void *)&(Coord){.row = row, .col = col});
 
             int maze_size = 0;
             while(carved_list.size > 0 && maze_size++ < max_maze_size) {
                 list_shuffle(&carved_list);
-                int coord = *(int *)list_pop(&carved_list);
+                Coord coord = *(Coord *)list_pop(&carved_list);
 
                 // decompose the coordinate
-                int col = coord % DUNGEON_WIDTH;
-                int row = coord / DUNGEON_WIDTH;
+                int col = coord.col;
+                int row = coord.row;
 
                 // print_dungeon(dungeon);
                 // printf("\nrow:%d col:%d\n", row, col);
@@ -319,8 +323,7 @@ static void _generate_maze(Dungeon *dungeon, int windiness, int max_maze_size) {
                 dungeon->blocks[row_b][col_b].region = dungeon->regions;
 
                 list_push(&carved_list, &coord);
-                int coord_b = (row_b * DUNGEON_WIDTH) + col_b;
-                list_push(&carved_list, &coord_b);
+                list_push(&carved_list, &(Coord){.row = row_b, .col = col_b});
             }
 
             destroy_list(&carved_list);
