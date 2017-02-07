@@ -7,9 +7,7 @@
 #include <dungeon/dungeon.h>
 #include <io.h>
 #include <util/util.h>
-
-#define DUNGEON_GEN_WIDTH 159
-#define DUNGEON_GEN_HEIGHT 105
+#include <util/list.h>
 
 static void _generate_veins(Dungeon *dungeon, int hardness, int liklihood);
 static void _generate_maze(Dungeon *dungeon, int windiness, int max_maze_size);
@@ -64,8 +62,8 @@ Dungeon create_dungeon(int room_tries, int min_rooms, int hardness, int windines
         }
         
         DungeonRoom room = create_room(width, height);
-        int col = (better_rand((DUNGEON_GEN_WIDTH - width) / 2) * 2);
-        int row = (better_rand((DUNGEON_GEN_HEIGHT - height) / 2) * 2);
+        int col = (better_rand((DUNGEON_WIDTH - width) / 2) * 2);
+        int row = (better_rand((DUNGEON_HEIGHT - height) / 2) * 2);
 
         if (!_can_place_room(&dungeon, &room, col, row)) {
             continue;
@@ -76,9 +74,11 @@ Dungeon create_dungeon(int room_tries, int min_rooms, int hardness, int windines
     }
 
     // generate maze
+    printf("generate maze\n");
     _generate_maze(&dungeon, windiness, max_maze_size);
 
     // since the maze is now generated rooms can be unfrozen
+    printf("unfreeze_rooms\n");
     _unfreeze_rooms(&dungeon);
 
     merge_regions(&dungeon, imperfection_chance);
@@ -208,14 +208,17 @@ static void _place_room(Dungeon *dungeon, DungeonRoom *room, int col, int row) {
             dungeon->blocks[row][col].region = dungeon->regions;
 
             // room blocks are immutable to prevent mazes pathing into their area
-            dungeon->blocks[row][col].immutable = true;
+            if (row != dungeon_row_start && row != dungeon_row_end
+                && col != dungeon_col_start && col != dungeon_col_end) {
+                dungeon->blocks[row][col].immutable = true;
+            }  
         }
     }
 }
 
 static void _generate_maze(Dungeon *dungeon, int windiness, int max_maze_size) {
-    for (int row = 1; row < DUNGEON_GEN_HEIGHT; row += 2) {
-        for (int col = 1; col < DUNGEON_GEN_WIDTH; col += 2) {
+    for (int row = 1; row < DUNGEON_HEIGHT; row += 2) {
+        for (int col = 1; col < DUNGEON_WIDTH; col += 2) {
             if (dungeon->blocks[row][col].type != ROCK || dungeon->blocks[row][col].immutable || 
             dungeon->blocks[row][col].hardness > 3 || dungeon->blocks[row][col].hardness < 2) {
                 continue;
@@ -223,16 +226,17 @@ static void _generate_maze(Dungeon *dungeon, int windiness, int max_maze_size) {
 
             dungeon->regions++;
             // carve this section of the maze
-            IntList carved_list = init_list();
+            List carved_list = init_list(sizeof(int));
             dungeon->blocks[row][col].type = HALL;
             dungeon->blocks[row][col].region = dungeon->regions;
-            list_push(&carved_list, (row * DUNGEON_WIDTH) + col);
+
+            int to_push = (row * DUNGEON_WIDTH) + col;
+            list_push(&carved_list, (void *)&to_push);
 
             int maze_size = 0;
             while(carved_list.size > 0 && maze_size++ < max_maze_size) {
-
                 list_shuffle(&carved_list);
-                int coord = list_pop(&carved_list);
+                int coord = *(int *)list_pop(&carved_list);
 
                 // decompose the coordinate
                 int col = coord % DUNGEON_WIDTH;
@@ -313,8 +317,10 @@ static void _generate_maze(Dungeon *dungeon, int windiness, int max_maze_size) {
                 dungeon->blocks[row_b][col_b].type = HALL;
                 dungeon->blocks[row_a][col_a].region = dungeon->regions;
                 dungeon->blocks[row_b][col_b].region = dungeon->regions;
-                list_push(&carved_list, coord);
-                list_push(&carved_list, (row_b * DUNGEON_WIDTH) + col_b);
+
+                list_push(&carved_list, &coord);
+                int coord_b = (row_b * DUNGEON_WIDTH) + col_b;
+                list_push(&carved_list, &coord_b);
             }
 
             destroy_list(&carved_list);
