@@ -71,11 +71,13 @@ static int _length_tunnel(void *context, Coordinate *this, Coordinate *to) {
         }
 
         uint8_t hardness = b_to.hardness;
-        if (hardness < 85) {
+        if (hardness < HARDNESS_TIER_1) {
+            return 1;
+        } else if (hardness < HARDNESS_TIER_2) {
             return 2;
-        } else if (hardness < 171) {
+        } else if (hardness < HARDNESS_TIER_3) {
             return 3;
-        } else if (hardness < 255) {
+        } else if (hardness < HARDNESS_TIER_MAX) {
             return 4;
         } else {
             return INT_MAX;

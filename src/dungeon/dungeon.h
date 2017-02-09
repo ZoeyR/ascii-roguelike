@@ -9,6 +9,12 @@
 #define DUNGEON_WIDTH 160
 #define DUNGEON_HEIGHT 105
 
+#define HARDNESS_TIER_0 0
+#define HARDNESS_TIER_1 85
+#define HARDNESS_TIER_2 171
+#define HARDNESS_TIER_3 220
+#define HARDNESS_TIER_MAX 255
+
 typedef struct {
     enum {
         ROCK,
