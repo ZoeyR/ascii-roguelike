@@ -2,6 +2,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <endian.h>
+#include <limits.h>
 
 #include <dungeon/dungeon.h>
 #include <io.h>
@@ -20,9 +21,21 @@
 #define HARDNESS_4 "\033[1;30;40m%c\033[0m"
 #define HARDNESS_5 "\033[31;40m%c\033[0m"
 
+#define DISTANCE_0 "\033[1;7;35;40m%c\033[0m"
+#define DISTANCE_1 "\033[37;44m%c\033[0m"
+#define DISTANCE_2 "\033[1;7;34;47m%c\033[0m"
+#define DISTANCE_3 "\033[37;42m%c\033[0m"
+#define DISTANCE_4 "\033[1;7;32;40m%c\033[0m"
+#define DISTANCE_5 "\033[37;43m%c\033[0m"
+#define DISTANCE_6 "\033[1;7;33;40m%c\033[0m"
+#define DISTANCE_7 "\033[37;41m%c\033[0m"
+#define DISTANCE_8 "\033[1;7;31;40m%c\033[0m"
+#define DISTANCE_9 "\033[37;45m%c\033[0m"
+
 static void print_block(DungeonBlock block, bool visible);
 static void print_hardness(char c, DungeonBlock block);
 static void print_s_hardness(char c, DungeonBlock block);
+static void print_distance(int distance);
 
 typedef union {
     uint32_t num;
@@ -47,7 +60,11 @@ void print_dungeon(Dungeon *dungeon) {
             visible |= dungeon->blocks[bottom][col].type != ROCK;
             visible |= dungeon->blocks[bottom][right].type != ROCK;
 
-            print_block(dungeon->blocks[row][col], visible);
+            if (dungeon->player_loc[0] == row && dungeon->player_loc[1] == col) {
+                printf("\033[1;32;40m@\033[0m");
+            } else {
+                print_block(dungeon->blocks[row][col], visible);
+            }
         }
         printf("\n");
     }
@@ -72,6 +89,16 @@ void print_room(DungeonRoom *room) {
             visible |= room->blocks[bottom][right].type != ROCK;
 
             print_block(room->blocks[row][col], visible);
+        }
+        printf("\n");
+    }
+}
+
+void print_distance_map(Distances* distances) {
+    for(int row = 0; row < DUNGEON_HEIGHT; row++) {
+        for(int col = 0; col < DUNGEON_WIDTH; col++) {
+            int distance = distances->d[row][col];
+            print_distance(distance);
         }
         printf("\n");
     }
@@ -297,6 +324,45 @@ static void print_hardness(char c, DungeonBlock block) {
         case 255:
             printf(HARDNESS_5, c);
             break;
+    }
+}
+
+static void print_distance(int distance) {
+    if (distance < INT_MAX) {
+        switch (distance % 10) {
+            case 0:
+                printf(DISTANCE_0, '0');
+                break;
+            case 1:
+                printf(DISTANCE_1, '1');
+                break;
+            case 2:
+                printf(DISTANCE_2, '2');
+                break;
+            case 3:
+                printf(DISTANCE_3, '3');
+                break;
+            case 4:
+                printf(DISTANCE_4, '4');
+                break;
+            case 5:
+                printf(DISTANCE_5, '5');
+                break;
+            case 6:
+                printf(DISTANCE_6, '6');
+                break;
+            case 7:
+                printf(DISTANCE_7, '7');
+                break;
+            case 8:
+                printf(DISTANCE_8, '8');
+                break;
+            case 9:
+                printf(DISTANCE_9, '9');
+                break;
+        }
+    } else {
+        putchar(' ');
     }
 }
 

@@ -16,7 +16,7 @@ void destroy_heap(Heap *heap) {
     destroy_list(&heap->data);
 }
 
-void insert_element(Heap *heap, void *n) {
+void heap_push(Heap *heap, void *n) {
     list_push(&heap->data, n);
 
     size_t our_index = heap->data.size - 1;
@@ -29,7 +29,7 @@ void insert_element(Heap *heap, void *n) {
     }
 }
 
-void *remove_top(Heap *heap) {
+void *heap_pop(Heap *heap) {
     list_swap(&heap->data, 0, heap->data.size - 1);
     void *ret = list_pop(&heap->data);
 
@@ -53,6 +53,10 @@ void *remove_top(Heap *heap) {
     }
     
     return ret;
+}
+
+bool heap_empty(Heap *heap) {
+    return heap->data.size == 0;
 }
 
 static size_t _parent_index(size_t index) {

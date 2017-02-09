@@ -4,9 +4,11 @@
 #include <time.h>
 #include <getopt.h>
 #include <string.h>
+#include <limits.h>
 #include <sys/stat.h>
 
 #include <dungeon/dungeon.h>
+#include <util/distance.h>
 #include <io.h>
 
 typedef struct {
@@ -16,6 +18,8 @@ typedef struct {
 } Options;
 
 Options parse_args(int argc, char *argv[]);
+static int _length_no_tunnel(void *context, Coordinate *this, Coordinate *to);
+static int _length_tunnel(void *context, Coordinate *this, Coordinate *to);
 int main(int argc, char *argv[]) {
     srand(time(NULL));
     int room_tries = 1000;
@@ -34,8 +38,50 @@ int main(int argc, char *argv[]) {
     }
 
     print_dungeon(&dungeon);
+
+    Distances no_tunnel = djikstra(&dungeon, dungeon.player_loc[0], dungeon.player_loc[1], _length_no_tunnel);
+    print_distance_map(&no_tunnel);
+
+    Distances tunnel = djikstra(&dungeon, dungeon.player_loc[0], dungeon.player_loc[1], _length_tunnel);
+    print_distance_map(&tunnel);
+
     if (options.save) {
         save_dungeon(&dungeon, options.path);
+    }
+}
+
+static int _length_no_tunnel(void *context, Coordinate *this, Coordinate *to) {
+    Dungeon *dungeon = (Dungeon *)context;
+    (void)(this);
+    DungeonBlock b_to = dungeon->blocks[to->row][to->col];
+    if (b_to.type == ROCK || b_to.type == PILLAR) {
+        return INT_MAX;
+    } else {
+        return 1;
+    }
+}
+
+static int _length_tunnel(void *context, Coordinate *this, Coordinate *to) {
+    Dungeon *dungeon = (Dungeon *)context;
+    (void)(this);
+    DungeonBlock b_to = dungeon->blocks[to->row][to->col];
+    if (b_to.type == ROCK || b_to.type == PILLAR) {
+        if(b_to.immutable) {
+            return INT_MAX;
+        }
+
+        uint8_t hardness = b_to.hardness;
+        if (hardness < 85) {
+            return 2;
+        } else if (hardness < 171) {
+            return 3;
+        } else if (hardness < 255) {
+            return 4;
+        } else {
+            return INT_MAX;
+        }
+    } else {
+        return 1;
     }
 }
 
