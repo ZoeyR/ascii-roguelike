@@ -84,6 +84,22 @@ Dungeon create_dungeon(int room_tries, int min_rooms, int hardness, int windines
     merge_regions(&dungeon, imperfection_chance);
 
     _fill_maze(&dungeon);
+
+    //place the player
+    bool placed = false;
+    while(!placed) {
+        for(int row = 0; row < DUNGEON_HEIGHT; row++) {
+            for(int col = 0; col < DUNGEON_WIDTH; col++) {
+                if (dungeon.blocks[row][col].type == FLOOR && !better_rand(4000)) {
+                    dungeon.player_loc[0] = row;
+                    dungeon.player_loc[1] = col;
+                    placed = true;
+                    col = DUNGEON_WIDTH;
+                    row = DUNGEON_HEIGHT;
+                }
+            }
+        }
+    }
     return dungeon;
 }
 

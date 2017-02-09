@@ -32,6 +32,7 @@ typedef struct {
 
 typedef struct {
     int regions;
+    int player_loc[2];
     DungeonBlock blocks[105][160];
 } Dungeon;
 
