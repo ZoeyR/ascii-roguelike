@@ -74,11 +74,9 @@ Dungeon create_dungeon(int room_tries, int min_rooms, int hardness, int windines
     }
 
     // generate maze
-    printf("generate maze\n");
     _generate_maze(&dungeon, windiness, max_maze_size);
 
     // since the maze is now generated rooms can be unfrozen
-    printf("unfreeze_rooms\n");
     _unfreeze_rooms(&dungeon);
 
     merge_regions(&dungeon, imperfection_chance);
