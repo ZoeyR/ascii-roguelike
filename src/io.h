@@ -8,7 +8,7 @@ void print_room(DungeonRoom *room);
 
 void print_dungeon(Dungeon *dungeon);
 
-void print_distance_map(Distances* distances);
+void print_distance_map(Dungeon *dungeon, Distances* distances);
 
 void save_dungeon(Dungeon *dungeon, char *path);
 

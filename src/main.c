@@ -40,10 +40,10 @@ int main(int argc, char *argv[]) {
     print_dungeon(&dungeon);
 
     Distances no_tunnel = djikstra(&dungeon, dungeon.player_loc[0], dungeon.player_loc[1], _length_no_tunnel);
-    print_distance_map(&no_tunnel);
+    print_distance_map(&dungeon, &no_tunnel);
 
     Distances tunnel = djikstra(&dungeon, dungeon.player_loc[0], dungeon.player_loc[1], _length_tunnel);
-    print_distance_map(&tunnel);
+    print_distance_map(&dungeon, &tunnel);
 
     if (options.save) {
         save_dungeon(&dungeon, options.path);

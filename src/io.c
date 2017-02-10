@@ -92,11 +92,15 @@ void print_room(DungeonRoom *room) {
     }
 }
 
-void print_distance_map(Distances* distances) {
+void print_distance_map(Dungeon *dungeon, Distances* distances) {
     for(int row = 0; row < DUNGEON_HEIGHT; row++) {
         for(int col = 0; col < DUNGEON_WIDTH; col++) {
             int distance = distances->d[row][col];
-            print_distance(distance);
+            if (dungeon->player_loc[0] == row && dungeon->player_loc[1] == col) {
+                printf("\033[1;32;40m@\033[0m");
+            } else {
+                print_distance(distance);
+            }
         }
         printf("\n");
     }
