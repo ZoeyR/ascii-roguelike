@@ -22,25 +22,25 @@ void heap_push(Heap *heap, void *n) {
     size_t our_index = heap->data.size - 1;
     size_t parent_index = _parent_index(our_index);
 
-    while(heap->comparator(list_at(&heap->data, our_index), list_at(&heap->data, parent_index)) < 0) {
+    while(heap->comparator(unwrap(list_at(&heap->data, our_index), 1), unwrap(list_at(&heap->data, parent_index), 1)) < 0) {
         list_swap(&heap->data, our_index, parent_index);
         our_index = parent_index;
         parent_index = _parent_index(our_index);
     }
 }
 
-void *heap_pop(Heap *heap) {
+HeapResult heap_pop(Heap *heap) {
     list_swap(&heap->data, 0, heap->data.size - 1);
-    void *ret = list_pop(&heap->data);
+    void *ret = try_result_map(list_pop(&heap->data), HeapResult, HEAP_EMPTY);
 
     size_t left_child_index = _left_child_index(heap, 0);
     size_t right_child_index = _right_child_index(heap, 0);
     size_t our_index = 0;
 
-    while(heap->comparator(list_at(&heap->data, our_index), list_at(&heap->data, left_child_index)) > 0
-          || heap->comparator(list_at(&heap->data, our_index), list_at(&heap->data, right_child_index)) > 0) {
+    while(heap->comparator(unwrap(list_at(&heap->data, our_index), 1), unwrap(list_at(&heap->data, left_child_index), 1)) > 0
+          || heap->comparator(unwrap(list_at(&heap->data, our_index), 1), unwrap(list_at(&heap->data, right_child_index), 1)) > 0) {
         size_t smallest_child_index;
-        if(heap->comparator(list_at(&heap->data, left_child_index), list_at(&heap->data, right_child_index)) > 0) {
+        if(heap->comparator(unwrap(list_at(&heap->data, left_child_index), 1), unwrap(list_at(&heap->data, right_child_index), 1)) > 0) {
             smallest_child_index = right_child_index;
         } else {
             smallest_child_index = left_child_index;
@@ -52,7 +52,7 @@ void *heap_pop(Heap *heap) {
         right_child_index = _right_child_index(heap, our_index);
     }
     
-    return ret;
+    return (HeapResult) ok(ret);
 }
 
 bool heap_empty(Heap *heap) {

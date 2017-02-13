@@ -3,6 +3,9 @@
 
 #include <stdlib.h>
 
+typedef struct {} Unit;
+Unit unit();
+
 #define define_result(NAME, OK, ERR) typedef struct { union { OK ok; ERR err;}; enum ResultTag tag; } NAME
 #define try_result(x) ({ \
     typeof (x) _x = (x); \

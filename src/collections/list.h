@@ -2,6 +2,7 @@
 #define LIST_H
 
 #include <stdlib.h>
+#include <util/util.h>
 
 typedef struct {
     void *data;
@@ -10,14 +11,22 @@ typedef struct {
     size_t capacity;
 } List;
 
+typedef enum  {
+    LIST_EMPTY,
+    OUT_OF_BOUNDS,
+} ListError;
+
+define_result(ListItemResult, void *, ListError);
+define_result(ListOpResult, Unit, ListError);
+
 List init_list(size_t elem_size);
 void destroy_list(List *list);
 
 void list_push(List *list, void *n);
-void *list_at(List *list, size_t index);
-void list_place(List *list, size_t index, void *n);
-void *list_pop(List *list);
+ListItemResult list_at(List *list, size_t index);
+ListOpResult list_place(List *list, size_t index, void *n);
+ListItemResult list_pop(List *list);
 void list_shuffle(List *list);
-void list_swap(List *list, size_t first, size_t second);
+ListOpResult list_swap(List *list, size_t first, size_t second);
 
 #endif

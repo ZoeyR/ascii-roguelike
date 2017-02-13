@@ -31,7 +31,7 @@ Distances djikstra(void *context, int start_row, int start_col, int (*length)(vo
     heap_push(&heap, &(HeapCoord){.row = start_row, .col = start_col, .distance = 0});
 
     while(!heap_empty(&heap)) {
-        HeapCoord c = *(HeapCoord *)heap_pop(&heap);
+        HeapCoord c = *(HeapCoord *)unwrap(heap_pop(&heap), 1);
         processed[c.row][c.col] = true;
         
         relative_array(1, c.row, c.col, DUNGEON_HEIGHT, DUNGEON_WIDTH, );

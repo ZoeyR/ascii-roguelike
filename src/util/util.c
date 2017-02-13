@@ -3,6 +3,9 @@
 
 #include <util/util.h>
 
+Unit unit() {
+    return (Unit){};
+}
 IntParseResult parse_int(char* str) {
     char* endptr = "hold";
     long int large = strtol(str, &endptr, 10);

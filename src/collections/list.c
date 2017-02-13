@@ -17,20 +17,25 @@ void destroy_list(List *list) {
     free(list->data);
 }
 
-void *list_at(List *list, size_t index) {
+ListItemResult list_at(List *list, size_t index) {
     uint8_t *byte_data = (uint8_t *)list->data;
     void *elem = (void *) &byte_data[index * list->elem_size];
 
-    return elem;
+    return (ListItemResult)ok(elem);
 }
 
-void list_place(List *list, size_t index, void *n) {
+ListOpResult list_place(List *list, size_t index, void *n) {
+    if (index > list->size - 1) {
+        return (ListOpResult)err(OUT_OF_BOUNDS);
+    }
     uint8_t *byte_n = (uint8_t *)n;
     uint8_t *byte_data = (uint8_t *)list->data;
 
     for(size_t i = 0; i < list->elem_size; i++) {
         byte_data[(index * list->elem_size) + i] = byte_n[i];
     }
+
+    return (ListOpResult)ok(unit());
 }
 
 void list_push(List *list, void *n) {
@@ -55,10 +60,14 @@ void list_push(List *list, void *n) {
     }
 }
 
-void* list_pop(List *list) {
+ListItemResult list_pop(List *list) {
+    if (list->size == 0) {
+        return (ListItemResult)err(LIST_EMPTY);
+    }
+
     list->size--;
     uint8_t *byte_data = (uint8_t *)list->data;
-    return &byte_data[list->size * list->elem_size];
+    return (ListItemResult) ok(&byte_data[list->size * list->elem_size]);
 }
 
 void list_shuffle(List *list) {
@@ -68,7 +77,11 @@ void list_shuffle(List *list) {
     }
 }
 
-void list_swap(List *list, size_t first, size_t second) {
+ListOpResult list_swap(List *list, size_t first, size_t second) {
+    if (first >= list->size || second >= list->size) {
+        return (ListOpResult)err(OUT_OF_BOUNDS);
+    }
+
     uint8_t *byte_data = list->data;
     uint8_t *tmp = malloc(list->elem_size);
     for(size_t j = 0; j < list->elem_size; j++) {
@@ -84,4 +97,5 @@ void list_swap(List *list, size_t first, size_t second) {
     }
 
     free(tmp);
+    return (ListOpResult)ok(unit());
 }

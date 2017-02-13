@@ -254,7 +254,7 @@ static void _generate_maze(Dungeon *dungeon, int windiness, int max_maze_size) {
             int maze_size = 0;
             while(carved_list.size > 0 && maze_size++ < max_maze_size) {
                 list_shuffle(&carved_list);
-                Coord coord = *(Coord *)list_pop(&carved_list);
+                Coord coord = *(Coord *)expect(list_pop(&carved_list), "list was empty", 1);
 
                 // decompose the coordinate
                 int col = coord.col;

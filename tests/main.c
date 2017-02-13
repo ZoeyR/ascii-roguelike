@@ -21,7 +21,7 @@ int test_heap_build() {
     }
 
     for(int i = 0; i < 10; i++) {
-        int n = *(int *)heap_pop(&heap);
+        int n = *(int *)unwrap(heap_pop(&heap), 1);
 
         if(n != sort_array[i]) {
             return 1;
