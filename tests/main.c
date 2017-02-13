@@ -109,7 +109,7 @@ static int _length_tunnel(void *context, Coordinate *this, Coordinate *to) {
 }
 
 int test_dijkstra_no_segfault() {
-    djikstra(NULL, 60, 60, _len);
+    dijkstra(NULL, 60, 60, _len);
 
     return 0;
 }
@@ -145,7 +145,7 @@ static int _dijkstra_descent_helper(int from_row, int from_col, Distances *d) {
 }
 
 int test_dijkstra_always_descend_empty() {
-    Distances d = djikstra(NULL, 60, 60, _len);
+    Distances d = dijkstra(NULL, 60, 60, _len);
 
     return _dijkstra_descent_helper(60, 60, &d);
 }
@@ -153,7 +153,7 @@ int test_dijkstra_always_descend_empty() {
 int test_dijkstra_always_descend_no_tunnel() {
     srand(10);
     Dungeon dungeon = create_dungeon(1000, 10, 50, 30, 2000, 500); 
-    Distances d = djikstra(&dungeon, dungeon.player_loc[0], dungeon.player_loc[1], _length_no_tunnel);
+    Distances d = dijkstra(&dungeon, dungeon.player_loc[0], dungeon.player_loc[1], _length_no_tunnel);
 
     return _dijkstra_descent_helper(dungeon.player_loc[0], dungeon.player_loc[1], &d);
 }
@@ -161,7 +161,7 @@ int test_dijkstra_always_descend_no_tunnel() {
 int test_dijkstra_always_descend_tunnel() {
     srand(10);
     Dungeon dungeon = create_dungeon(1000, 10, 50, 30, 2000, 500); 
-    Distances d = djikstra(&dungeon, dungeon.player_loc[0], dungeon.player_loc[1], _length_tunnel);
+    Distances d = dijkstra(&dungeon, dungeon.player_loc[0], dungeon.player_loc[1], _length_tunnel);
 
     return _dijkstra_descent_helper(dungeon.player_loc[0], dungeon.player_loc[1], &d);
 }
