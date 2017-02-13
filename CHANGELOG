@@ -34,3 +34,27 @@
 * Implement argument parsing
 * Create basic save/load feature
 * Implement extensions to save/load
+
+2017-2-7
+--------
+* Implement binary heap
+* Create testing framework
+* Rearrange source files to be more clear
+
+2017-2-9
+--------
+* Add player to Dungeon
+* Create distance calculation
+* Print distance
+* Colorize distance printing
+* Add additional heap tests
+
+2017-2-10
+---------
+* Add dijkstra tests
+* Print player on screen
+
+2017-2-11
+---------
+* Add error handling
+* Fix typo in name of function
