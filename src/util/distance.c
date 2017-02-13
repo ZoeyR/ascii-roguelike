@@ -13,7 +13,7 @@ typedef struct {
 
 static int _comp(void *this, void *to);
 
-Distances djikstra(void *context, int start_row, int start_col, int (*length)(void *context, Coordinate* this, Coordinate* to)) {
+Distances dijkstra(void *context, int start_row, int start_col, int (*length)(void *context, Coordinate* this, Coordinate* to)) {
     Heap heap;
     bool processed[DUNGEON_HEIGHT][DUNGEON_WIDTH];
     Distances d;
