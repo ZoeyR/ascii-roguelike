@@ -1,12 +1,5 @@
-The distance calculation in this code follows the specifications outlined in
-the assignment. Two distance calculations are done when the program is run. The
-first is for non-tunneling monsters. These monsters can only move through open
-spaces and each open space has a weight of 1. Tunneling monsters can move
-through rock. Calculating the weight for this puts the hardness of the rock
-into multiple bins [1, 84][85, 170][171, 220][221, 254] and 255. These bins
-have weights of 1, 2, 3, 4, and Infinite respectively.
-
-Distances are printed in a colorized form to make it easier to see patterns in
-the output. There are 10 different colors and each one is associated with a 
-distance mod 10.
-
+The dungeon will generate the amount of monsters specified by --nummon.
+These monsters will have a 50% chance of each property defined in the spec.
+Intelligent monsters can remember the last known location of the player.
+If a monster does not know where to go it stays still unless it is erratic.
+Monsters are printed in bright red text and the player is printed as a green "@"

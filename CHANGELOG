@@ -58,3 +58,18 @@
 ---------
 * Add error handling
 * Fix typo in name of function
+
+2017-2-21
+---------
+* Added nummon flag
+* Added entity store
+* Created basic game loop
+* Created monster movement logic base
+* Line of sight calculation
+
+2017-2-22
+---------
+* Finished monster movement
+* discovered bug with passing pointer pointer to dijkstra
+* made player move around
+* printed dungeon
