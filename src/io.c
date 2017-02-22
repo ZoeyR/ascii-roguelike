@@ -5,6 +5,7 @@
 #include <limits.h>
 
 #include <dungeon/dungeon.h>
+#include <util/util.h>
 #include <io.h>
 
 #define S_HARDNESS_0 "\033[1;7;33;40m%c\033[0m"
@@ -31,6 +32,7 @@
 #define DISTANCE_9 "\033[37;45m%c\033[0m"
 
 static void print_block(DungeonBlock block, bool visible);
+static void print_entity(Entity *entity);
 static void print_hardness(char c, DungeonBlock block);
 static void print_s_hardness(char c, DungeonBlock block);
 static void print_distance(int distance);
@@ -58,8 +60,8 @@ void print_dungeon(Dungeon *dungeon) {
             visible |= dungeon->blocks[bottom][col].type != ROCK;
             visible |= dungeon->blocks[bottom][right].type != ROCK;
 
-            if (dungeon->player_loc[0] == row && dungeon->player_loc[1] == col) {
-                printf("\033[1;32;40m@\033[0m");
+            if (dungeon->blocks[row][col].entity_id != 0) {
+                print_entity(unwrap(entity_retrieve(&dungeon->store, dungeon->blocks[row][col].entity_id), 1));
             } else {
                 print_block(dungeon->blocks[row][col], visible);
             }
@@ -92,11 +94,11 @@ void print_room(DungeonRoom *room) {
     }
 }
 
-void print_distance_map(Dungeon *dungeon, Distances* distances) {
+void print_distance_map(Distances* distances) {
     for(int row = 0; row < DUNGEON_HEIGHT; row++) {
         for(int col = 0; col < DUNGEON_WIDTH; col++) {
             int distance = distances->d[row][col];
-            if (dungeon->player_loc[0] == row && dungeon->player_loc[1] == col) {
+            if (distance == 0) {
                 printf("\033[1;32;40m@\033[0m");
             } else {
                 print_distance(distance);
@@ -277,6 +279,20 @@ static void print_block(DungeonBlock block, bool visible) {
     print_hardness(c, block);
 }
 
+static void print_entity(Entity *entity) {
+    if (entity->type == PLAYER) {
+        printf("\033[1;32;40m@\033[0m");
+        return;
+    }
+
+    uint32_t print = 0;
+    print |= entity->monster.smart & 0x01;
+    print |= (entity->monster.telepathic & 0x01) << 1;
+    print |= (entity->monster.tunneling & 0x01) << 2;
+    print |= (entity->monster.erratic & 0x01) << 3;
+    printf("\033[1;31;40m%x\033[0m", print);
+}
+
 static void print_s_hardness(char c, DungeonBlock block) {
     if (block.immutable) {
         printf(S_HARDNESS_MAX, c);
@@ -348,7 +364,7 @@ static void print_distance(int distance) {
                 break;
         }
     } else {
-        putchar(' ');
+        putchar('X');
     }
 }
 

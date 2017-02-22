@@ -16,9 +16,11 @@ static void _place_room(Dungeon *dungeon, DungeonRoom *room, int col, int row);
 static void _fill_maze(Dungeon *dungeon);
 static void _unfreeze_rooms(Dungeon *dungeon);
 
-Dungeon create_dungeon(int room_tries, int min_rooms, int hardness, int windiness, int max_maze_size, int imperfection_chance) {
+Dungeon create_dungeon(int room_tries, int min_rooms, int hardness, int windiness, int max_maze_size, int imperfection_chance, int monsters) {
     Dungeon dungeon;
     dungeon.regions = 0;
+    dungeon.store = init_entity_store();
+    dungeon.monster_count = monsters;
     // fill dungeon with random noise
     for(int row = 0; row < DUNGEON_HEIGHT; row++) {
         for(int col = 0; col < DUNGEON_WIDTH; col++) {
@@ -33,7 +35,7 @@ Dungeon create_dungeon(int room_tries, int min_rooms, int hardness, int windines
                 immutable = false;
             }
 
-            DungeonBlock block = {.type = ROCK, .hardness = hardness, .region = 0, .immutable = immutable};
+            DungeonBlock block = {.type = ROCK, .hardness = hardness, .region = 0, .immutable = immutable, .entity_id = 0};
             dungeon.blocks[row][col] = block;
         }
     }
@@ -73,6 +75,34 @@ Dungeon create_dungeon(int room_tries, int min_rooms, int hardness, int windines
         }
     }
 
+    while(monsters > 0) {
+        int row = better_rand(DUNGEON_HEIGHT - 1);
+        int col = better_rand(DUNGEON_WIDTH - 1);
+
+        if (dungeon.blocks[row][col].type != ROCK &&
+            dungeon.blocks[row][col].type != PILLAR &&
+            dungeon.blocks[row][col].entity_id == 0) {
+            
+            Entity monster;
+            monster.type = MONSTER;
+            monster.speed = better_rand(15) + 5;
+            monster.alive = true;
+            monster.monster.row = row;
+            monster.monster.col = col;
+            monster.monster.pc_last_seen[0] = row;
+            monster.monster.pc_last_seen[1] = col;
+        
+            monster.monster.smart = better_rand(1);
+            monster.monster.telepathic = better_rand(1);
+            monster.monster.tunneling = better_rand(1);
+            monster.monster.erratic = better_rand(1);
+        
+            EIdx id = add_entity(&dungeon.store, monster);
+            dungeon.blocks[row][col].entity_id = id;
+            monsters--;
+        }
+    }
+
     // generate maze
     _generate_maze(&dungeon, windiness, max_maze_size);
 
@@ -84,18 +114,23 @@ Dungeon create_dungeon(int room_tries, int min_rooms, int hardness, int windines
     _fill_maze(&dungeon);
 
     //place the player
-    bool placed = false;
-    while(!placed) {
-        for(int row = 0; row < DUNGEON_HEIGHT; row++) {
-            for(int col = 0; col < DUNGEON_WIDTH; col++) {
-                if (dungeon.blocks[row][col].type == FLOOR && !better_rand(4000)) {
-                    dungeon.player_loc[0] = row;
-                    dungeon.player_loc[1] = col;
-                    placed = true;
-                    col = DUNGEON_WIDTH;
-                    row = DUNGEON_HEIGHT;
-                }
-            }
+    while(1) {
+        int row = better_rand(DUNGEON_HEIGHT - 1);
+        int col = better_rand(DUNGEON_WIDTH - 1);
+
+        if (dungeon.blocks[row][col].type != ROCK &&
+            dungeon.blocks[row][col].type != PILLAR &&
+            dungeon.blocks[row][col].entity_id == 0) {
+                
+            Entity player;
+            player.player.row = row;
+            player.player.col = col;
+            player.type = PLAYER;
+            player.alive = true;
+            player.speed = 10;
+            EIdx player_id = add_entity(&dungeon.store, player);
+            dungeon.player_id = player_id;
+            break;
         }
     }
     return dungeon;

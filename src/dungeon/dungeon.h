@@ -3,6 +3,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include <dungeon/entities.h>
 
 #define ROOM_MAX_WIDTH 27
 #define ROOM_MAX_HEIGHT 27
@@ -26,6 +27,7 @@ typedef struct {
     uint8_t hardness;
     int region;
     bool immutable;
+    EIdx entity_id;
 } DungeonBlock;
 
 typedef struct {
@@ -38,14 +40,16 @@ typedef struct {
 
 typedef struct {
     int regions;
-    int player_loc[2];
+    int monster_count;
+    EIdx player_id;
+    EntityStore store;
     DungeonBlock blocks[105][160];
 } Dungeon;
 
 // create a new random room with the given paramters. Rooms must be no larget than 25x25
 DungeonRoom create_room(int width, int height);
 
-Dungeon create_dungeon(int room_tries, int min_rooms, int hardness, int windiness, int max_maze_size, int imperfection_chance);
+Dungeon create_dungeon(int room_tries, int min_rooms, int hardness, int windiness, int max_maze_size, int imperfection_chance, int monsters);
 
 void merge_regions(Dungeon *dungeon, int extra_hole_chance);
 

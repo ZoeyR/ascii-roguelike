@@ -9,17 +9,19 @@
 
 #include <dungeon/dungeon.h>
 #include <util/distance.h>
+#include <util/util.h>
+#include <loop.h>
 #include <io.h>
+#include <unistd.h>
 
 typedef struct {
     int save;
     int load;
     char path[256];
+    int monsters;
 } Options;
 
 Options parse_args(int argc, char *argv[]);
-static int _length_no_tunnel(void *context, Coordinate *this, Coordinate *to);
-static int _length_tunnel(void *context, Coordinate *this, Coordinate *to);
 int main(int argc, char *argv[]) {
     srand(time(NULL));
     int room_tries = 1000;
@@ -34,56 +36,30 @@ int main(int argc, char *argv[]) {
     if (options.load) {
         dungeon = load_dungeon(options.path);
     } else {
-        dungeon = create_dungeon(room_tries, min_rooms, hardness, windiness, max_maze_size, imperfection);
+        dungeon = create_dungeon(room_tries, min_rooms, hardness, windiness, max_maze_size, imperfection, options.monsters);
     }
 
-    print_dungeon(&dungeon);
+    GameState state = init_state(&dungeon);
 
-    Distances no_tunnel = dijkstra(&dungeon, dungeon.player_loc[0], dungeon.player_loc[1], _length_no_tunnel);
-    print_distance_map(&dungeon, &no_tunnel);
-
-    Distances tunnel = dijkstra(&dungeon, dungeon.player_loc[0], dungeon.player_loc[1], _length_tunnel);
-    print_distance_map(&dungeon, &tunnel);
+    while (1) {
+        if (tick(&dungeon, &state)) {
+            print_dungeon(&dungeon);
+            usleep(160000);
+        }
+        if (!unwrap(entity_retrieve(&dungeon.store, dungeon.player_id), 1)->alive) {
+            print_dungeon(&dungeon);
+            printf("Player loses :(\n");
+            break;
+        } 
+        if (dungeon.monster_count == 0) {
+            print_dungeon(&dungeon);
+            printf("Player wins!\n");
+            break;
+        }
+    }
 
     if (options.save) {
         save_dungeon(&dungeon, options.path);
-    }
-}
-
-static int _length_no_tunnel(void *context, Coordinate *this, Coordinate *to) {
-    Dungeon *dungeon = (Dungeon *)context;
-    (void)(this);
-    DungeonBlock b_to = dungeon->blocks[to->row][to->col];
-    if (b_to.type == ROCK || b_to.type == PILLAR) {
-        return INT_MAX;
-    } else {
-        return 1;
-    }
-}
-
-static int _length_tunnel(void *context, Coordinate *this, Coordinate *to) {
-    Dungeon *dungeon = (Dungeon *)context;
-    (void)(this);
-    DungeonBlock b_to = dungeon->blocks[to->row][to->col];
-    if (b_to.type == ROCK || b_to.type == PILLAR) {
-        if(b_to.immutable) {
-            return INT_MAX;
-        }
-
-        uint8_t hardness = b_to.hardness;
-        if (hardness < HARDNESS_TIER_1) {
-            return 1;
-        } else if (hardness < HARDNESS_TIER_2) {
-            return 2;
-        } else if (hardness < HARDNESS_TIER_3) {
-            return 3;
-        } else if (hardness < HARDNESS_TIER_MAX) {
-            return 4;
-        } else {
-            return INT_MAX;
-        }
-    } else {
-        return 1;
     }
 }
 
@@ -96,11 +72,12 @@ Options parse_args(int argc, char *argv[]) {
     
     struct option long_options[] = { {"save", no_argument, &options.save, true},
                                      {"load", no_argument, &options.load, true},
-                                     {"path", required_argument, 0, 'p'}};
+                                     {"path", required_argument, NULL, 'p'},
+                                     {"nummon", required_argument, NULL, 'n'}};
     int option_index = 0;
 
     int c;
-    while((c = getopt_long(argc, argv, "slp:", long_options, &option_index)) != -1) {
+    while((c = getopt_long(argc, argv, "slp:n:", long_options, &option_index)) != -1) {
         switch (c) {
             case 's':
                 options.save = true;
@@ -110,6 +87,9 @@ Options parse_args(int argc, char *argv[]) {
                 break;
             case 'p':
                 strcpy(options.path, optarg);
+                break;
+            case 'n':
+                options.monsters = expect(parse_int(optarg), "nummon argument must be an integer", 1);
                 break;
             default:
                 break;
