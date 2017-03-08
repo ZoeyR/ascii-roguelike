@@ -2,18 +2,13 @@
 #include <dungeon/dungeon.h>
 #include <io.h>
 
+#include <signal.h>
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <endian.h>
 #include <limits.h>
 #include <ncurses.h>
-
-#define SCREEN_ROWS 24
-#define SCREEN_COLS 80
-
-#define GAME_SCREEN_ROWS 21
-#define GAME_SCREEN_COLS 80
 
 #define S_HARDNESS_0 "\033[1;7;33;40m%c\033[0m"
 #define S_HARDNESS_1 "\033[1;7;37;40m%c\033[0m"
@@ -49,6 +44,12 @@ typedef union {
     uint8_t bytes[4];
 } FileNum;
 
+static int SCREEN_ROWS = 24;
+static int SCREEN_COLS = 80;
+
+static int GAME_SCREEN_ROWS = 21;
+static int GAME_SCREEN_COLS = 80;
+
 static WINDOW *main_screen = NULL;
 static WINDOW *game_screen = NULL;
 
@@ -57,7 +58,7 @@ static void cleanup(void) {
     endwin();
 }
 
-void init_screen() {
+void init_screen(bool full_size) {
     atexit(cleanup);
     initscr();
     cbreak();
@@ -72,6 +73,14 @@ void init_screen() {
     init_pair(4, COLOR_RED, COLOR_BLACK);
     init_pair(5, COLOR_GREEN, COLOR_BLACK);
     init_pair(6, COLOR_BLACK, COLOR_BLUE);
+
+    if (full_size) {
+        SCREEN_ROWS = LINES;
+        SCREEN_COLS = COLS;
+        GAME_SCREEN_ROWS = SCREEN_ROWS - 3;
+        GAME_SCREEN_COLS = SCREEN_COLS;
+    }
+
     int start_row = (LINES - SCREEN_ROWS) / 2;
     int start_col = (COLS - SCREEN_COLS) / 2;
 
@@ -444,6 +453,4 @@ static void print_distance(int distance) {
     } else {
         putchar('X');
     }
-}
-
-                
+}               

@@ -7,6 +7,10 @@ EntityStore init_entity_store() {
     return (EntityStore){.list = list};
 }
 
+void destroy_entity_store(EntityStore *store) {
+    destroy_list(&store->list);
+}
+
 EIdx spawn_monster(EntityStore *store, int row, int col) {
     Entity monster;
     monster.type = MONSTER;

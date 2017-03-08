@@ -14,51 +14,41 @@
 #include <io.h>
 #include <unistd.h>
 
-typedef struct {
-    int save;
-    int load;
-    char path[256];
-    int monsters;
-} Options;
-
 Options parse_args(int argc, char *argv[]);
 int main(int argc, char *argv[]) {
     srand(time(NULL));
-    int room_tries = 1000;
-    int min_rooms = 10;
-    int hardness = 50;
-    int windiness = 30;
-    int max_maze_size = 2000;
-    int imperfection = 2000;
+    
     Options options = parse_args(argc, argv);
+    options.room_tries = 1000;
+    options.min_rooms = 10;
+    options.hardness = 50;
+    options.windiness = 30;
+    options.max_maze_size = 2000;
+    options.imperfection = 2000;
 
-    init_screen();
+    init_screen(options.full_size);
     Dungeon dungeon;
     if (options.load) {
         dungeon = load_dungeon(options.path);
     } else {
-        dungeon = create_dungeon(room_tries, min_rooms, hardness, windiness, max_maze_size, imperfection, options.monsters);
+        dungeon = create_dungeon(options);
     }
 
-    GameState state = init_state(&dungeon);
+    GameState state = init_state(dungeon);
 
     while (1) {
-        Entity *player = unwrap(entity_retrieve(&dungeon.store, dungeon.player_id), 1);
-        print_dungeon(&dungeon, player->player.row, player->player.col);
-        tick(&dungeon, &state);
+        Entity *player = unwrap(entity_retrieve(&state.dungeon.store, state.dungeon.player_id), 1);
+        print_dungeon(&state.dungeon, player->player.row, player->player.col);
+        tick(&state);
 
-        if (!unwrap(entity_retrieve(&dungeon.store, dungeon.player_id), 1)->alive) {
+        if (!unwrap(entity_retrieve(&state.dungeon.store, state.dungeon.player_id), 1)->alive) {
             printf("Player loses :(\n");
             break;
         } 
-        if (dungeon.monster_count == 0) {
-            printf("Player wins!\n");
-            break;
-        }
     }
 
     if (options.save) {
-        save_dungeon(&dungeon, options.path);
+        save_dungeon(&state.dungeon, options.path);
     }
 }
 
@@ -72,11 +62,12 @@ Options parse_args(int argc, char *argv[]) {
     struct option long_options[] = { {"save", no_argument, &options.save, true},
                                      {"load", no_argument, &options.load, true},
                                      {"path", required_argument, NULL, 'p'},
-                                     {"nummon", required_argument, NULL, 'n'}};
+                                     {"nummon", required_argument, NULL, 'n'},
+                                     {"full", no_argument, &options.full_size, true}};
     int option_index = 0;
 
     int c;
-    while((c = getopt_long(argc, argv, "slp:n:", long_options, &option_index)) != -1) {
+    while((c = getopt_long(argc, argv, "slfp:n:", long_options, &option_index)) != -1) {
         switch (c) {
             case 's':
                 options.save = true;
@@ -89,6 +80,9 @@ Options parse_args(int argc, char *argv[]) {
                 break;
             case 'n':
                 options.monsters = expect(parse_int(optarg), "nummon argument must be an integer", 1);
+                break;
+            case 'f':
+                options.full_size = true;
                 break;
             default:
                 break;

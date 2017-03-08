@@ -41,6 +41,7 @@ typedef struct {
 
 define_result(EntityStoreResult, Entity *, Unit);
 EntityStore init_entity_store();
+void destroy_entity_store(EntityStore *store);
 EIdx add_entity(EntityStore *store, Entity entity);
 EIdx spawn_monster(EntityStore *store, int row, int col);
 EntityStoreResult entity_retrieve(EntityStore *store, EIdx index);

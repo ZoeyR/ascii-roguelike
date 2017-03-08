@@ -5,7 +5,7 @@
 #include <util/distance.h>
 #include <dungeon/dungeon.h>
 
-void init_screen(void);
+void init_screen(bool full_size);
 
 int get_input(void);
 

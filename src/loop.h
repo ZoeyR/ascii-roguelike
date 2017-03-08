@@ -7,9 +7,10 @@
 
 typedef struct {
     Heap event_queue;
-    bool player_dead;
+    Dungeon dungeon;
 } GameState;
 
-GameState init_state(Dungeon *dungeon);
-bool tick(Dungeon *dungeon, GameState *state);
+GameState init_state(Dungeon dungeon);
+void destroy_state(GameState *state);
+bool tick(GameState *state);
 #endif

@@ -23,39 +23,55 @@ typedef struct {
 } Coord;
 
 static int _event_comparator(void* this, void* to);
-static void _monster_move(Dungeon *dungeon, Entity *entity);
-static void _player_move(Dungeon *dungeon, Entity *entity);
-static void _move_to(Dungeon *dungeon, Entity *entity, int row, int col);
-static Coord _get_target(Dungeon *dungeon, Entity *entity);
-static bool _can_see(Dungeon *dungeon, Coord a, Coord b);
+static bool _monster_move(GameState *state, Entity *entity);
+static bool _player_move(GameState *state, Entity *entity);
+static void _move_to(GameState *state, Entity *entity, int row, int col);
+static Coord _get_target(GameState *state, Entity *entity);
+static bool _can_see(GameState *state, Coord a, Coord b);
 static int _length_no_tunnel(void *context, Coordinate *this, Coordinate *to);
 static int _length_tunnel(void *context, Coordinate *this, Coordinate *to);
+static void _rebuild_state(GameState *state);
 
-GameState init_state(Dungeon *dungeon) {
+GameState init_state(Dungeon dungeon) {
     Heap heap = init_heap(_event_comparator, sizeof(Event));
 
-    for(EIdx i = 1; i <= dungeon->store.list.size; i++) {
+    for(EIdx i = 1; i <= dungeon.store.list.size; i++) {
         heap_push(&heap, &(Event){.turn = 0, .entity_id = i, .event_type = MOVE});
     }
 
-    return (GameState){.event_queue = heap, .player_dead = false};
+    return (GameState){.event_queue = heap, .dungeon = dungeon};
 }
 
-bool tick(Dungeon *dungeon, GameState *state) {
+void destroy_state(GameState *state) {
+    destroy_heap(&state->event_queue);
+    destroy_dungeon(&state->dungeon);
+}
+
+static void _rebuild_state(GameState *state) {
+    destroy_heap(&state->event_queue);
+    rebuild_dungeon(&state->dungeon);
+    *state = init_state(state->dungeon);
+}
+
+bool tick(GameState *state) {
     Event event = *(Event *)unwrap(heap_pop(&state->event_queue), 1);
-    Entity *entity = unwrap(entity_retrieve(&dungeon->store, event.entity_id), 1);
+    Entity *entity = unwrap(entity_retrieve(&state->dungeon.store, event.entity_id), 1);
 
     if (!entity->alive) {
         return false;
     }
     
+    bool rebuilt;
     if (entity->type == MONSTER) {
-        _monster_move(dungeon, entity);
+        rebuilt = _monster_move(state, entity);
     } else if (entity->type == PLAYER) {
-        _player_move(dungeon, entity);
+        rebuilt = _player_move(state, entity);
     }
-    event.turn = event.turn + 1000/entity->speed;
-    heap_push(&state->event_queue, &event);
+
+    if (!rebuilt) {
+        event.turn = event.turn + 1000/entity->speed;
+        heap_push(&state->event_queue, &event);
+    }
 
     return entity->type == PLAYER;
 }
@@ -67,7 +83,8 @@ static int _event_comparator(void* this, void* to) {
     return _this->turn - _to->turn;
 }
 
-static void _monster_move(Dungeon *dungeon, Entity *entity) {
+static bool _monster_move(GameState *state, Entity *entity) {
+    Dungeon *dungeon = &state->dungeon;
     int col = entity->monster.col;
     int row = entity->monster.row;
     relative_array(1, entity->monster.row, entity->monster.col, DUNGEON_HEIGHT, DUNGEON_WIDTH, );
@@ -76,12 +93,12 @@ static void _monster_move(Dungeon *dungeon, Entity *entity) {
                           {bottom, left}, {bottom, col}, {bottom, right}};
     if (entity->monster.erratic && better_rand(1)) {
         int idx = better_rand(7);
-        _move_to(dungeon, entity, adjacent[idx][0], adjacent[idx][1]);
-        return;
+        _move_to(state, entity, adjacent[idx][0], adjacent[idx][1]);
+        return false;
     }
 
      // get the location this monster is moving to
-    Coord target = _get_target(dungeon, entity);
+    Coord target = _get_target(state, entity);
 
     if (entity->monster.smart) {
         //first get the correct distance map
@@ -109,10 +126,10 @@ static void _monster_move(Dungeon *dungeon, Entity *entity) {
 
             if (hardness == 0) {
                 dungeon->blocks[adjacent[lowest][0]][adjacent[lowest][1]].type = HALL;
-                _move_to(dungeon, entity, adjacent[lowest][0], adjacent[lowest][1]);
+                _move_to(state, entity, adjacent[lowest][0], adjacent[lowest][1]);
             }
         } else {
-            _move_to(dungeon, entity, adjacent[lowest][0], adjacent[lowest][1]);
+            _move_to(state, entity, adjacent[lowest][0], adjacent[lowest][1]);
         }
     } else {
         int to_row = entity->monster.row > target.row ? entity->monster.row + 1 : entity->monster.row - 1;
@@ -123,11 +140,13 @@ static void _monster_move(Dungeon *dungeon, Entity *entity) {
         if (entity->monster.col == target.col) {
             to_col = entity->monster.col;
         }
-        _move_to(dungeon, entity, to_row, to_col);
+        _move_to(state, entity, to_row, to_col);
     }
+
+    return false;
 }
 
-static void _player_move(Dungeon *dungeon, Entity *entity) {
+static bool _player_move(GameState *state, Entity *entity) {
     bool control_mode = true;
     int col = entity->player.col;
     int row = entity->player.row;
@@ -143,45 +162,49 @@ static void _player_move(Dungeon *dungeon, Entity *entity) {
             switch (ch) {
                 case 'y':
                 case '7':
-                    _move_to(dungeon, entity, top, left);
-                    return;
+                    _move_to(state, entity, top, left);
+                    return false;
                 case 'k':
                 case '8':
-                     _move_to(dungeon, entity, top, col);
-                    return;
+                     _move_to(state, entity, top, col);
+                    return false;
                 case 'u':
                 case '9':
-                     _move_to(dungeon, entity, top, right);
-                    return;
+                     _move_to(state, entity, top, right);
+                    return false;
                 case 'l':
                 case '6':
-                     _move_to(dungeon, entity, row, right);
-                    return;
+                     _move_to(state, entity, row, right);
+                    return false;
                 case 'n':
                 case '3':
-                     _move_to(dungeon, entity, bottom, right);
-                    return;
+                     _move_to(state, entity, bottom, right);
+                    return false;
                 case 'j':
                 case '2':
-                     _move_to(dungeon, entity, bottom, col);
-                    return;
+                     _move_to(state, entity, bottom, col);
+                    return false;
                 case 'b':
                 case '1':
-                     _move_to(dungeon, entity, bottom, left);
-                    return;
+                     _move_to(state, entity, bottom, left);
+                    return false;
                 case 'h':
                 case '4':
-                     _move_to(dungeon, entity, row, left);
-                    return;
+                     _move_to(state, entity, row, left);
+                    return false;
                 case '<':
-                     _move_to(dungeon, entity, row, left);
-                    return;
+                    if (state->dungeon.blocks[row][col].type == UPSTAIRS) {
+                        _rebuild_state(state);
+                        return true;
+                    }
                 case '>':
-                     _move_to(dungeon, entity, row, left);
-                    return;
+                    if (state->dungeon.blocks[row][col].type == DOWNSTAIRS) {
+                        _rebuild_state(state);
+                        return true;
+                    }
                 case ' ':
                 case '5':
-                    return;
+                    return false;
                 case 'L':
                     control_mode = false;
                     break;
@@ -192,25 +215,25 @@ static void _player_move(Dungeon *dungeon, Entity *entity) {
             switch (ch) {
                 case 'k':
                 case '8':
-                    print_dungeon(dungeon, --view_row, view_col);
+                    print_dungeon(&state->dungeon, --view_row, view_col);
                     break;
                 case 'l':
                 case '6':
-                    print_dungeon(dungeon, view_row, ++view_col);
+                    print_dungeon(&state->dungeon, view_row, ++view_col);
                     break;
                 case 'j':
                 case '2':
-                    print_dungeon(dungeon, ++view_row, view_col);
+                    print_dungeon(&state->dungeon, ++view_row, view_col);
                     break;
                 case 'h':
                 case '4':
-                    print_dungeon(dungeon, view_row, --view_col);
+                    print_dungeon(&state->dungeon, view_row, --view_col);
                     break;
                 case 27:
                     control_mode = true;
                     view_row = row;
                     view_col = col;
-                    print_dungeon(dungeon, row, col);
+                    print_dungeon(&state->dungeon, row, col);
                     break;
                 case 'Q':
                     exit(0);
@@ -219,15 +242,15 @@ static void _player_move(Dungeon *dungeon, Entity *entity) {
     }
 }
 
-static Coord _get_target(Dungeon *dungeon, Entity *entity) {
-    Entity *player = unwrap(entity_retrieve(&dungeon->store, dungeon->player_id), 1);
+static Coord _get_target(GameState *state, Entity *entity) {
+    Entity *player = unwrap(entity_retrieve(&state->dungeon.store, state->dungeon.player_id), 1);
 
     if (entity->monster.telepathic) {
         return (Coord){.row = player->player.row, .col = player->player.col};
     }
 
     // check for pc line of sight
-    if (_can_see(dungeon, 
+    if (_can_see(state, 
                  (Coord){.row = entity->monster.row, .col = entity->monster.col},
                  (Coord){.row = player->player.row, .col = player->player.col})) {
         return (Coord){.row = player->player.row, .col = player->player.col};
@@ -238,7 +261,7 @@ static Coord _get_target(Dungeon *dungeon, Entity *entity) {
     }
 }
 
-static bool _can_see(Dungeon *dungeon, Coord a, Coord b) {
+static bool _can_see(GameState *state, Coord a, Coord b) {
     Coord current = a;
     int d_row = abs(a.row - b.row);
     int d_col = -abs(a.col - b.col);
@@ -247,8 +270,8 @@ static bool _can_see(Dungeon *dungeon, Coord a, Coord b) {
     int error = d_row + d_col;
 
     while(true) {
-        if (dungeon->blocks[current.row][current.col].type == ROCK ||
-            dungeon->blocks[current.row][current.col].type == PILLAR) {
+        if (state->dungeon.blocks[current.row][current.col].type == ROCK ||
+            state->dungeon.blocks[current.row][current.col].type == PILLAR) {
             return false;
         }
 
@@ -269,7 +292,8 @@ static bool _can_see(Dungeon *dungeon, Coord a, Coord b) {
     }
 }
 
-static void _move_to(Dungeon *dungeon, Entity *entity, int to_row, int to_col) {
+static void _move_to(GameState *state, Entity *entity, int to_row, int to_col) {
+    Dungeon *dungeon = &state->dungeon;
     if (dungeon->blocks[to_row][to_col].type == ROCK ||
         dungeon->blocks[to_row][to_col].type == PILLAR) {
             return;

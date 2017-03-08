@@ -16,11 +16,21 @@ static void _place_room(Dungeon *dungeon, DungeonRoom *room, int col, int row);
 static void _fill_maze(Dungeon *dungeon);
 static void _unfreeze_rooms(Dungeon *dungeon);
 
-Dungeon create_dungeon(int room_tries, int min_rooms, int hardness, int windiness, int max_maze_size, int imperfection_chance, int monsters) {
+void rebuild_dungeon(Dungeon *dungeon) {
+    destroy_entity_store(&dungeon->store);
+    *dungeon = create_dungeon(dungeon->params);
+}
+
+void destroy_dungeon(Dungeon *dungeon) {
+    destroy_entity_store(&dungeon->store);
+}
+
+Dungeon create_dungeon(Options params) {
     Dungeon dungeon;
     dungeon.regions = 0;
     dungeon.store = init_entity_store();
-    dungeon.monster_count = monsters;
+    dungeon.monster_count = params.monsters;
+    dungeon.params = params;
     // fill dungeon with random noise
     for(int row = 0; row < DUNGEON_HEIGHT; row++) {
         for(int col = 0; col < DUNGEON_WIDTH; col++) {
@@ -41,12 +51,12 @@ Dungeon create_dungeon(int room_tries, int min_rooms, int hardness, int windines
     }
 
     // create veins of hard and soft rock
-    _generate_veins(&dungeon, hardness, 300);
+    _generate_veins(&dungeon, params.hardness, 300);
 
     // generate enough rooms for the dungeon to be reasonably filled
     int rooms = 0;
     int tries = 0;
-    while(rooms < min_rooms || tries < room_tries) {
+    while(rooms < params.min_rooms || tries < params.room_tries) {
         tries++;
 
         // rooms must be odd sized for the generation algorithm to work
@@ -75,7 +85,8 @@ Dungeon create_dungeon(int room_tries, int min_rooms, int hardness, int windines
         }
     }
 
-    while(monsters > 0) {
+    int monsters_to_place = params.monsters;
+    while(monsters_to_place > 0) {
         int row = better_rand(DUNGEON_HEIGHT - 1);
         int col = better_rand(DUNGEON_WIDTH - 1);
 
@@ -99,17 +110,17 @@ Dungeon create_dungeon(int room_tries, int min_rooms, int hardness, int windines
         
             EIdx id = add_entity(&dungeon.store, monster);
             dungeon.blocks[row][col].entity_id = id;
-            monsters--;
+            monsters_to_place--;
         }
     }
 
     // generate maze
-    _generate_maze(&dungeon, windiness, max_maze_size);
+    _generate_maze(&dungeon, params.windiness, params.max_maze_size);
 
     // since the maze is now generated rooms can be unfrozen
     _unfreeze_rooms(&dungeon);
 
-    merge_regions(&dungeon, imperfection_chance);
+    merge_regions(&dungeon, params.imperfection);
 
     _fill_maze(&dungeon);
 
