@@ -22,7 +22,9 @@ typedef struct {
         HALL,
         FLOOR,
         RUBBLE,
-        PILLAR
+        PILLAR,
+        UPSTAIRS,
+        DOWNSTAIRS,
     } type;
     uint8_t hardness;
     int region;

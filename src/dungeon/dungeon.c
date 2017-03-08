@@ -134,6 +134,27 @@ Dungeon create_dungeon(int room_tries, int min_rooms, int hardness, int windines
             break;
         }
     }
+
+    // place an upward staircase
+    while(1) {
+        int row = better_rand(DUNGEON_HEIGHT - 1);
+        int col = better_rand(DUNGEON_WIDTH - 1);
+
+        if (dungeon.blocks[row][col].type == FLOOR) {
+            dungeon.blocks[row][col].type = UPSTAIRS;
+            break;
+        }
+    }
+
+    while(1) {
+        int row = better_rand(DUNGEON_HEIGHT - 1);
+        int col = better_rand(DUNGEON_WIDTH - 1);
+
+        if (dungeon.blocks[row][col].type == FLOOR) {
+            dungeon.blocks[row][col].type = DOWNSTAIRS;
+            break;
+        }
+    }
     return dungeon;
 }
 

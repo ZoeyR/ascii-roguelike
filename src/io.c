@@ -9,8 +9,11 @@
 #include <limits.h>
 #include <ncurses.h>
 
-#define SCREEN_ROWS 21
+#define SCREEN_ROWS 24
 #define SCREEN_COLS 80
+
+#define GAME_SCREEN_ROWS 21
+#define GAME_SCREEN_COLS 80
 
 #define S_HARDNESS_0 "\033[1;7;33;40m%c\033[0m"
 #define S_HARDNESS_1 "\033[1;7;37;40m%c\033[0m"
@@ -46,7 +49,8 @@ typedef union {
     uint8_t bytes[4];
 } FileNum;
 
-static WINDOW * game_screen = NULL;
+static WINDOW *main_screen = NULL;
+static WINDOW *game_screen = NULL;
 
 static void cleanup(void) {
     delwin(game_screen);
@@ -67,14 +71,17 @@ void init_screen() {
     init_pair(3, COLOR_BLACK, COLOR_BLACK);
     init_pair(4, COLOR_RED, COLOR_BLACK);
     init_pair(5, COLOR_GREEN, COLOR_BLACK);
+    init_pair(6, COLOR_BLACK, COLOR_BLUE);
     int start_row = (LINES - SCREEN_ROWS) / 2;
     int start_col = (COLS - SCREEN_COLS) / 2;
 
-    game_screen = newwin(SCREEN_ROWS, SCREEN_COLS, start_row, start_col);
+
+    main_screen = newwin(SCREEN_ROWS, SCREEN_COLS, start_row, start_col);
+    game_screen = derwin(main_screen, GAME_SCREEN_ROWS, GAME_SCREEN_COLS, 1, 0);
     notimeout(game_screen, true);
     box(game_screen, 0, 0);
-
-    wrefresh(game_screen);
+    wbkgd(main_screen, COLOR_PAIR(6));
+    wrefresh(main_screen);
 }
 
 int get_input(void) {
@@ -82,15 +89,16 @@ int get_input(void) {
 }
 
 void print_dungeon(Dungeon *dungeon, int center_row, int center_col) {
-    int start_row = center_row - (SCREEN_ROWS / 2);
-    int end_row = start_row + SCREEN_ROWS;
-    int start_col = center_col - (SCREEN_COLS / 2);
-    int end_col = start_col + SCREEN_COLS;
+    wbkgd(main_screen, COLOR_PAIR(6));
+    int start_row = center_row - (GAME_SCREEN_ROWS / 2);
+    int end_row = start_row + GAME_SCREEN_ROWS;
+    int start_col = center_col - (GAME_SCREEN_COLS / 2);
+    int end_col = start_col + GAME_SCREEN_COLS;
     for(int row = start_row; row < end_row; row++) {
         for(int col = start_col; col < end_col; col++) {
             // need special logic if we are printing outside dungeon bounds
             if (col < 0 || col >= DUNGEON_WIDTH || row < 0 || row >= DUNGEON_HEIGHT) {
-                mvwprintw(game_screen, row- start_row, col - start_col, " ");
+                mvwprintw(game_screen, row - start_row, col - start_col, " ");
                 continue;
             }
 
@@ -117,7 +125,7 @@ void print_dungeon(Dungeon *dungeon, int center_row, int center_col) {
         }
     }
     box(game_screen, 0, 0);
-    wrefresh(game_screen);
+    wrefresh(main_screen);
 }
 
 void print_distance_map(Distances* distances) {
@@ -300,6 +308,12 @@ static void print_block(DungeonBlock block, bool visible, int row, int col) {
             break;
         case PILLAR:
             c = 'I';
+            break;
+        case UPSTAIRS:
+            c = '<';
+            break;
+        case DOWNSTAIRS:
+            c = '>';
             break;
     }
 

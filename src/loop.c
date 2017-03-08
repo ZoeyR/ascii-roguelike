@@ -173,6 +173,12 @@ static void _player_move(Dungeon *dungeon, Entity *entity) {
                 case '4':
                      _move_to(dungeon, entity, row, left);
                     return;
+                case '<':
+                     _move_to(dungeon, entity, row, left);
+                    return;
+                case '>':
+                     _move_to(dungeon, entity, row, left);
+                    return;
                 case ' ':
                 case '5':
                     return;
