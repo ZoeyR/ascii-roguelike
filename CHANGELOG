@@ -73,3 +73,12 @@
 * discovered bug with passing pointer pointer to dijkstra
 * made player move around
 * printed dungeon
+
+2017-3-8
+--------
+* Print with ncurses
+* Colorize ncurses
+* Add player controls
+* Add camera controls
+* Add stairs
+* Add fullscreen option

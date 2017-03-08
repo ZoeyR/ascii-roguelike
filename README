@@ -1,5 +1,7 @@
-The dungeon will generate the amount of monsters specified by --nummon.
-These monsters will have a 50% chance of each property defined in the spec.
-Intelligent monsters can remember the last known location of the player.
-If a monster does not know where to go it stays still unless it is erratic.
-Monsters are printed in bright red text and the player is printed as a green "@"
+The dungeon is printed in an 80x24 area. The top row and bottom 2 rows are
+dedicated to status areas. The game area is outlined by a border, giving the
+play area a size of 78x19. No additional mappings other than the ones specified
+in the requirements document have been implemented.
+
+Additionally, a new flag has been added to the program "-f", which will cause
+game to take up the entire terminal size if your terminal is larger than 80x24.
