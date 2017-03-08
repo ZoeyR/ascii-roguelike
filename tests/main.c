@@ -152,18 +152,39 @@ int test_dijkstra_always_descend_empty() {
 
 int test_dijkstra_always_descend_no_tunnel() {
     srand(10);
-    Dungeon dungeon = create_dungeon(1000, 10, 50, 30, 2000, 500); 
-    Distances d = dijkstra(&dungeon, dungeon.player_loc[0], dungeon.player_loc[1], _length_no_tunnel);
+    Options options;
+    options.monsters = 30;
+    options.room_tries = 1000;
+    options.min_rooms = 10;
+    options.hardness = 50;
+    options.windiness = 30;
+    options.max_maze_size = 2000;
+    options.imperfection = 2000;
 
-    return _dijkstra_descent_helper(dungeon.player_loc[0], dungeon.player_loc[1], &d);
+    Dungeon dungeon = create_dungeon(options); 
+    Entity *player = unwrap(entity_retrieve(&dungeon.store, dungeon.player_id), 1);
+    Distances d = dijkstra(&dungeon, player->player.row, player->player.col, _length_no_tunnel);
+
+    return _dijkstra_descent_helper(player->player.row, player->player.col, &d);
 }
 
 int test_dijkstra_always_descend_tunnel() {
     srand(10);
-    Dungeon dungeon = create_dungeon(1000, 10, 50, 30, 2000, 500); 
-    Distances d = dijkstra(&dungeon, dungeon.player_loc[0], dungeon.player_loc[1], _length_tunnel);
 
-    return _dijkstra_descent_helper(dungeon.player_loc[0], dungeon.player_loc[1], &d);
+    Options options;
+    options.monsters = 30;
+    options.room_tries = 1000;
+    options.min_rooms = 10;
+    options.hardness = 50;
+    options.windiness = 30;
+    options.max_maze_size = 2000;
+    options.imperfection = 2000;
+
+    Dungeon dungeon = create_dungeon(options); 
+    Entity *player = unwrap(entity_retrieve(&dungeon.store, dungeon.player_id), 1);
+    Distances d = dijkstra(&dungeon, player->player.row, player->player.col, _length_tunnel);
+
+    return _dijkstra_descent_helper(player->player.row, player->player.col, &d);
 }
 
 #define test(test) ({ \
