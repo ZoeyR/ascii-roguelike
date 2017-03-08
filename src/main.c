@@ -32,6 +32,7 @@ int main(int argc, char *argv[]) {
     int imperfection = 2000;
     Options options = parse_args(argc, argv);
 
+    init_screen();
     Dungeon dungeon;
     if (options.load) {
         dungeon = load_dungeon(options.path);
@@ -43,20 +44,21 @@ int main(int argc, char *argv[]) {
 
     while (1) {
         if (tick(&dungeon, &state)) {
-            print_dungeon(&dungeon);
+            Entity *player = unwrap(entity_retrieve(&dungeon.store, dungeon.player_id), 1);
+            print_dungeon(&dungeon, player->player.row, player->player.col);
             usleep(160000);
         }
         if (!unwrap(entity_retrieve(&dungeon.store, dungeon.player_id), 1)->alive) {
-            print_dungeon(&dungeon);
             printf("Player loses :(\n");
             break;
         } 
         if (dungeon.monster_count == 0) {
-            print_dungeon(&dungeon);
             printf("Player wins!\n");
             break;
         }
     }
+
+    end_screen();
 
     if (options.save) {
         save_dungeon(&dungeon, options.path);

@@ -1,12 +1,16 @@
+#include <util/util.h>
+#include <dungeon/dungeon.h>
+#include <io.h>
+
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <endian.h>
 #include <limits.h>
+#include <ncurses.h>
 
-#include <dungeon/dungeon.h>
-#include <util/util.h>
-#include <io.h>
+#define SCREEN_ROWS 21
+#define SCREEN_COLS 80
 
 #define S_HARDNESS_0 "\033[1;7;33;40m%c\033[0m"
 #define S_HARDNESS_1 "\033[1;7;37;40m%c\033[0m"
@@ -31,10 +35,10 @@
 #define DISTANCE_8 "\033[1;7;31;40m%c\033[0m"
 #define DISTANCE_9 "\033[37;45m%c\033[0m"
 
-static void print_block(DungeonBlock block, bool visible);
-static void print_entity(Entity *entity);
-static void print_hardness(char c, DungeonBlock block);
-static void print_s_hardness(char c, DungeonBlock block);
+static void print_block(DungeonBlock block, bool visible, int row, int col);
+static void print_entity(Entity *entity, int row, int col);
+static void print_hardness(char c, DungeonBlock block, int row, int col);
+static void print_s_hardness(char c, DungeonBlock block, int row, int col);
 static void print_distance(int distance);
 
 typedef union {
@@ -42,9 +46,47 @@ typedef union {
     uint8_t bytes[4];
 } FileNum;
 
-void print_dungeon(Dungeon *dungeon) {
-    for(int row = 0; row < DUNGEON_HEIGHT; row++) {
-        for(int col = 0; col < DUNGEON_WIDTH; col++) {
+static WINDOW * game_screen = NULL;
+
+void init_screen() {
+    initscr();
+    raw();
+    keypad(stdscr, true);
+    noecho();
+    start_color();
+    curs_set(0);
+    init_pair(1, COLOR_YELLOW, COLOR_BLACK);
+    init_pair(2, COLOR_WHITE, COLOR_BLACK);
+    init_pair(3, COLOR_BLACK, COLOR_BLACK);
+    init_pair(4, COLOR_RED, COLOR_BLACK);
+    init_pair(5, COLOR_GREEN, COLOR_BLACK);
+    int start_row = (LINES - SCREEN_ROWS) / 2;
+    int start_col = (COLS - SCREEN_COLS) / 2;
+
+    game_screen = newwin(SCREEN_ROWS, SCREEN_COLS, start_row, start_col);
+    box(game_screen, 0, 0);
+
+    wrefresh(game_screen);
+}
+
+void end_screen(void) {
+    delwin(game_screen);
+    endwin();
+}
+
+void print_dungeon(Dungeon *dungeon, int center_row, int center_col) {
+    int start_row = center_row - (SCREEN_ROWS / 2);
+    int end_row = start_row + SCREEN_ROWS;
+    int start_col = center_col - (SCREEN_COLS / 2);
+    int end_col = start_col + SCREEN_COLS;
+    for(int row = start_row; row < end_row; row++) {
+        for(int col = start_col; col < end_col; col++) {
+            // need special logic if we are printing outside dungeon bounds
+            if (col < 0 || col >= DUNGEON_WIDTH || row < 0 || row >= DUNGEON_HEIGHT) {
+                mvwprintw(game_screen, row- start_row, col - start_col, " ");
+                continue;
+            }
+
             int right = (col >= DUNGEON_WIDTH - 1) ? 0 : col + 1;
             int left = (col <= 0) ? DUNGEON_WIDTH - 1 : col - 1;
             int top = (row <= 0) ? DUNGEON_HEIGHT - 1 : row - 1;
@@ -61,37 +103,14 @@ void print_dungeon(Dungeon *dungeon) {
             visible |= dungeon->blocks[bottom][right].type != ROCK;
 
             if (dungeon->blocks[row][col].entity_id != 0) {
-                print_entity(unwrap(entity_retrieve(&dungeon->store, dungeon->blocks[row][col].entity_id), 1));
+                print_entity(unwrap(entity_retrieve(&dungeon->store, dungeon->blocks[row][col].entity_id), 1), row - start_row, col - start_col);
             } else {
-                print_block(dungeon->blocks[row][col], visible);
+                print_block(dungeon->blocks[row][col], visible, row - start_row, col - start_col);
             }
         }
-        printf("\n");
     }
-}
-
-void print_room(DungeonRoom *room) {
-    for(int row = 0; row < ROOM_MAX_HEIGHT; row++) {
-        for(int col = 0; col < ROOM_MAX_WIDTH; col++) {
-            int right = (col >= ROOM_MAX_WIDTH - 1) ? 0 : col + 1;
-            int left = (col <= 0) ? ROOM_MAX_WIDTH - 1 : col - 1;
-            int top = (row <= 0) ? ROOM_MAX_HEIGHT - 1 : row - 1;
-            int bottom = (row >= ROOM_MAX_HEIGHT - 1) ? 0 : row + 1;
-            bool visible = false;
-
-            visible |= room->blocks[top][left].type != ROCK;
-            visible |= room->blocks[top][col].type != ROCK;
-            visible |= room->blocks[top][right].type != ROCK;
-            visible |= room->blocks[row][left].type != ROCK;
-            visible |= room->blocks[row][right].type != ROCK;
-            visible |= room->blocks[bottom][left].type != ROCK;
-            visible |= room->blocks[bottom][col].type != ROCK;
-            visible |= room->blocks[bottom][right].type != ROCK;
-
-            print_block(room->blocks[row][col], visible);
-        }
-        printf("\n");
-    }
+    box(game_screen, 0, 0);
+    wrefresh(game_screen);
 }
 
 void print_distance_map(Distances* distances) {
@@ -252,15 +271,15 @@ Dungeon load_dungeon(char* path) {
     return dungeon;
 }
 
-static void print_block(DungeonBlock block, bool visible) {
+static void print_block(DungeonBlock block, bool visible, int row, int col) {
     char c;
     switch(block.type) {
         default:
         case ROCK:
             if (visible) {
-                print_s_hardness(' ', block);
+                print_s_hardness(' ', block, row, col);
             } else {
-                printf(" ");
+                mvwprintw(game_screen, row, col, " ");
             }
             return;
         case HALL:
@@ -276,12 +295,15 @@ static void print_block(DungeonBlock block, bool visible) {
             c = 'I';
             break;
     }
-    print_hardness(c, block);
+
+    print_hardness(c, block, row, col);
 }
 
-static void print_entity(Entity *entity) {
+static void print_entity(Entity *entity, int row, int col) {
+    init_pair(5, COLOR_GREEN, COLOR_BLACK);
     if (entity->type == PLAYER) {
-        printf("\033[1;32;40m@\033[0m");
+        wattron(game_screen, COLOR_PAIR(5));
+        mvwprintw(game_screen, row, col, "@");
         return;
     }
 
@@ -290,42 +312,77 @@ static void print_entity(Entity *entity) {
     print |= (entity->monster.telepathic & 0x01) << 1;
     print |= (entity->monster.tunneling & 0x01) << 2;
     print |= (entity->monster.erratic & 0x01) << 3;
-    printf("\033[1;31;40m%x\033[0m", print);
+    wattron(game_screen, COLOR_PAIR(4));
+    mvwprintw(game_screen, row, col, "%x", print);
 }
 
-static void print_s_hardness(char c, DungeonBlock block) {
+static void print_s_hardness(char c, DungeonBlock block, int row, int col) {
+    wattron(game_screen, A_REVERSE);
     if (block.immutable) {
-        printf(S_HARDNESS_MAX, c);
-        return;
-    }
-    if (block.hardness < HARDNESS_TIER_1) {
-        printf(S_HARDNESS_0, c);
+        wattron(game_screen, COLOR_PAIR(4));
+        mvwprintw(game_screen, row, col, "%c", c);
+        wattroff(game_screen, COLOR_PAIR(4));
+    } else if (block.hardness < HARDNESS_TIER_1) {
+        wattron(game_screen, A_BOLD);
+        wattron(game_screen, COLOR_PAIR(1));
+        mvwprintw(game_screen, row, col, "%c", c);
+        wattroff(game_screen, COLOR_PAIR(1));
+        wattroff(game_screen, A_BOLD);
     } else if (block.hardness < HARDNESS_TIER_2) {
-        printf(S_HARDNESS_1, c);
+        wattron(game_screen, A_BOLD);
+        wattron(game_screen, COLOR_PAIR(2));
+        mvwprintw(game_screen, row, col, "%c", c);
+        wattroff(game_screen, COLOR_PAIR(2));
+        wattroff(game_screen, A_BOLD);
     } else if (block.hardness < HARDNESS_TIER_3) {
-        printf(S_HARDNESS_2, c);
+        wattron(game_screen, COLOR_PAIR(2));
+        mvwprintw(game_screen, row, col, "%c", c);
+        wattroff(game_screen, COLOR_PAIR(2));
     } else if (block.hardness < HARDNESS_TIER_MAX) {
-        printf(S_HARDNESS_3, c);
+        wattron(game_screen, A_BOLD);
+        wattron(game_screen, COLOR_PAIR(3));
+        mvwprintw(game_screen, row, col, "%c", c);
+        wattroff(game_screen, COLOR_PAIR(3));
+        wattroff(game_screen, A_BOLD);
     } else {
-        printf(S_HARDNESS_MAX, c);
+        wattron(game_screen, COLOR_PAIR(4));
+        mvwprintw(game_screen, row, col, "%c", c);
+        wattroff(game_screen, COLOR_PAIR(4));
     }
+    wattroff(game_screen, A_REVERSE);
 }
 
-static void print_hardness(char c, DungeonBlock block) {
+static void print_hardness(char c, DungeonBlock block, int row, int col) {
     if (block.immutable) {
-        printf(S_HARDNESS_MAX, c);
-        return;
-    }
-    if (block.hardness < HARDNESS_TIER_1) {
-        printf(HARDNESS_0, c);
+        wattron(game_screen, COLOR_PAIR(4));
+        mvwprintw(game_screen, row, col, "%c", c);
+        wattroff(game_screen, COLOR_PAIR(4));
+    } else if (block.hardness < HARDNESS_TIER_1) {
+        wattron(game_screen, A_BOLD);
+        wattron(game_screen, COLOR_PAIR(1));
+        mvwprintw(game_screen, row, col, "%c", c);
+        wattroff(game_screen, COLOR_PAIR(1));
+        wattroff(game_screen, A_BOLD);
     } else if (block.hardness < HARDNESS_TIER_2) {
-        printf(HARDNESS_1, c);
+        wattron(game_screen, A_BOLD);
+        wattron(game_screen, COLOR_PAIR(2));
+        mvwprintw(game_screen, row, col, "%c", c);
+        wattroff(game_screen, COLOR_PAIR(2));
+        wattroff(game_screen, A_BOLD);
     } else if (block.hardness < HARDNESS_TIER_3) {
-        printf(HARDNESS_2, c);
+        wattron(game_screen, COLOR_PAIR(2));
+        mvwprintw(game_screen, row, col, "%c", c);
+        wattroff(game_screen, COLOR_PAIR(2));
     } else if (block.hardness < HARDNESS_TIER_MAX) {
-        printf(HARDNESS_3, c);
+        wattron(game_screen, A_BOLD);
+        wattron(game_screen, COLOR_PAIR(3));
+        mvwprintw(game_screen, row, col, "%c", c);
+        wattroff(game_screen, COLOR_PAIR(3));
+        wattroff(game_screen, A_BOLD);
     } else {
-        printf(HARDNESS_MAX, c);
+        wattron(game_screen, COLOR_PAIR(4));
+        mvwprintw(game_screen, row, col, "%c", c);
+        wattroff(game_screen, COLOR_PAIR(4));
     }
 }
 

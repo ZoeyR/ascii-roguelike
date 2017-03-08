@@ -1,13 +1,15 @@
 #ifndef IO_H
 #define IO_H
 
-#include <dungeon/dungeon.h>
-#include <util/distance.h>
 #include <dungeon/entities.h>
+#include <util/distance.h>
+#include <dungeon/dungeon.h>
 
-void print_room(DungeonRoom *room);
+void init_screen(void);
 
-void print_dungeon(Dungeon *dungeon);
+void end_screen(void);
+
+void print_dungeon(Dungeon *dungeon, int center_row, int center_col);
 
 void print_distance_map(Distances* distances);
 

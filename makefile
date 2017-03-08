@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -lm -ggdb -Isrc
+CFLAGS = -Wall -Wextra -lm -lcurses -ggdb -Isrc
 DEPDIR = .d
 DEPFLAGS = -MT $@ -MMD -MF $(DEPDIR)/$*.d
 SOURCEDIR = src

@@ -1,5 +1,5 @@
-#ifndef ROOM_H
-#define ROOM_H
+#ifndef DUNGEON_H
+#define DUNGEON_H
 
 #include <stdbool.h>
 #include <stdint.h>
