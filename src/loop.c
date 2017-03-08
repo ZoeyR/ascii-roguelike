@@ -8,6 +8,7 @@
 #include <io.h>
 #include <collections/heap.h>
 
+#include <ncurses.h>
 typedef struct {
     int turn;
     EIdx entity_id;
@@ -127,14 +128,89 @@ static void _monster_move(Dungeon *dungeon, Entity *entity) {
 }
 
 static void _player_move(Dungeon *dungeon, Entity *entity) {
+    bool control_mode = true;
     int col = entity->player.col;
     int row = entity->player.row;
+
+    int view_col = col;
+    int view_row = row;
     relative_array(1, entity->player.row, entity->player.col, DUNGEON_HEIGHT, DUNGEON_WIDTH, );
-    int adjacent[8][2] = {{top, left}   , {top, col}   , {top, right},
-                          {row, left}   ,                {row, right},
-                          {bottom, left}, {bottom, col}, {bottom, right}};
-    int idx = better_rand(7);
-    _move_to(dungeon, entity, adjacent[idx][0], adjacent[idx][1]);
+
+    // loop until a movement is actually made
+    while (true) {
+        int ch = get_input();
+        if (control_mode) {
+            switch (ch) {
+                case 'y':
+                case '7':
+                    _move_to(dungeon, entity, top, left);
+                    return;
+                case 'k':
+                case '8':
+                     _move_to(dungeon, entity, top, col);
+                    return;
+                case 'u':
+                case '9':
+                     _move_to(dungeon, entity, top, right);
+                    return;
+                case 'l':
+                case '6':
+                     _move_to(dungeon, entity, row, right);
+                    return;
+                case 'n':
+                case '3':
+                     _move_to(dungeon, entity, bottom, right);
+                    return;
+                case 'j':
+                case '2':
+                     _move_to(dungeon, entity, bottom, col);
+                    return;
+                case 'b':
+                case '1':
+                     _move_to(dungeon, entity, bottom, left);
+                    return;
+                case 'h':
+                case '4':
+                     _move_to(dungeon, entity, row, left);
+                    return;
+                case ' ':
+                case '5':
+                    return;
+                case 'L':
+                    control_mode = false;
+                    break;
+                case 'Q':
+                    exit(0);
+            }
+        } else {
+            switch (ch) {
+                case 'k':
+                case '8':
+                    print_dungeon(dungeon, --view_row, view_col);
+                    break;
+                case 'l':
+                case '6':
+                    print_dungeon(dungeon, view_row, ++view_col);
+                    break;
+                case 'j':
+                case '2':
+                    print_dungeon(dungeon, ++view_row, view_col);
+                    break;
+                case 'h':
+                case '4':
+                    print_dungeon(dungeon, view_row, --view_col);
+                    break;
+                case 27:
+                    control_mode = true;
+                    view_row = row;
+                    view_col = col;
+                    print_dungeon(dungeon, row, col);
+                    break;
+                case 'Q':
+                    exit(0);
+            }
+        }
+    }
 }
 
 static Coord _get_target(Dungeon *dungeon, Entity *entity) {

@@ -48,8 +48,15 @@ typedef union {
 
 static WINDOW * game_screen = NULL;
 
+static void cleanup(void) {
+    delwin(game_screen);
+    endwin();
+}
+
 void init_screen() {
+    atexit(cleanup);
     initscr();
+    cbreak();
     raw();
     keypad(stdscr, true);
     noecho();
@@ -64,14 +71,14 @@ void init_screen() {
     int start_col = (COLS - SCREEN_COLS) / 2;
 
     game_screen = newwin(SCREEN_ROWS, SCREEN_COLS, start_row, start_col);
+    notimeout(game_screen, true);
     box(game_screen, 0, 0);
 
     wrefresh(game_screen);
 }
 
-void end_screen(void) {
-    delwin(game_screen);
-    endwin();
+int get_input(void) {
+    return wgetch(game_screen);
 }
 
 void print_dungeon(Dungeon *dungeon, int center_row, int center_col) {

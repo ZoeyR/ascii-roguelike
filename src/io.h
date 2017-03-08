@@ -7,7 +7,7 @@
 
 void init_screen(void);
 
-void end_screen(void);
+int get_input(void);
 
 void print_dungeon(Dungeon *dungeon, int center_row, int center_col);
 

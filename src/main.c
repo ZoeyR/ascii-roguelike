@@ -43,11 +43,10 @@ int main(int argc, char *argv[]) {
     GameState state = init_state(&dungeon);
 
     while (1) {
-        if (tick(&dungeon, &state)) {
-            Entity *player = unwrap(entity_retrieve(&dungeon.store, dungeon.player_id), 1);
-            print_dungeon(&dungeon, player->player.row, player->player.col);
-            usleep(160000);
-        }
+        Entity *player = unwrap(entity_retrieve(&dungeon.store, dungeon.player_id), 1);
+        print_dungeon(&dungeon, player->player.row, player->player.col);
+        tick(&dungeon, &state);
+
         if (!unwrap(entity_retrieve(&dungeon.store, dungeon.player_id), 1)->alive) {
             printf("Player loses :(\n");
             break;
@@ -57,8 +56,6 @@ int main(int argc, char *argv[]) {
             break;
         }
     }
-
-    end_screen();
 
     if (options.save) {
         save_dungeon(&dungeon, options.path);

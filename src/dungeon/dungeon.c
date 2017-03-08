@@ -129,6 +129,7 @@ Dungeon create_dungeon(int room_tries, int min_rooms, int hardness, int windines
             player.alive = true;
             player.speed = 10;
             EIdx player_id = add_entity(&dungeon.store, player);
+            dungeon.blocks[row][col].entity_id = player_id;
             dungeon.player_id = player_id;
             break;
         }
