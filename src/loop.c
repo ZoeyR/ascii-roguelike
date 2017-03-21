@@ -61,7 +61,7 @@ bool tick(GameState *state) {
         return false;
     }
     
-    bool rebuilt;
+    bool rebuilt = false;
     if (entity->type == MONSTER) {
         rebuilt = _monster_move(state, entity);
     } else if (entity->type == PLAYER) {
