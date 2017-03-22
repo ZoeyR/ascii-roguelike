@@ -27,7 +27,7 @@ TEST_TARGET = testout
 all: $(TARGET)
 
 $(TARGET): $(OBJECTS) $(CPP_OBJECTS)
-	$(CPP) -o $@ $^ $(CFLAGS)
+	$(CPP) -o $@ $^ $(CFLAGS) -std=c++14
 
 $(OBJECTDIR)/%.o: $(SOURCEDIR)/%.c $(DEPDIR)/%.d
 	@mkdir -p $(@D)
@@ -37,7 +37,7 @@ $(OBJECTDIR)/%.o: $(SOURCEDIR)/%.c $(DEPDIR)/%.d
 $(OBJECTDIR)/%.opp: $(SOURCEDIR)/%.cpp $(DEPDIR)/%.d
 	@mkdir -p $(@D)
 	@mkdir -p $(patsubst $(OBJECTDIR)%, $(DEPDIR)%, $(@D))
-	$(CPP) $(DEPFLAGS) $(CFLAGS) -c $< -o $@
+	$(CPP) $(DEPFLAGS) $(CFLAGS) -std=c++14 -c $< -o $@
 
 clean:
 	rm -rf $(OBJECTDIR) $(TARGET) $(DEPDIR) $(TESTOBJDIR)
