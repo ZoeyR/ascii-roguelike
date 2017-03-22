@@ -59,7 +59,7 @@ typedef struct {
     int regions;
     int monster_count;
     EIdx player_id;
-    EntityStore store;
+    EntityStore *store;
     DungeonBlock blocks[105][160];
 } Dungeon;
 

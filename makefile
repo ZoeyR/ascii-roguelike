@@ -1,4 +1,5 @@
 CC = gcc
+CPP = g++
 CFLAGS = -Wall -Wextra -lm -lcurses -ggdb -Isrc
 DEPDIR = .d
 DEPFLAGS = -MT $@ -MMD -MF $(DEPDIR)/$*.d
@@ -7,6 +8,10 @@ OBJECTDIR = obj
 SOURCES = $(wildcard $(SOURCEDIR)/*.c) $(wildcard $(SOURCEDIR)/**/*.c)
 HEADERS = $(wildcard $(SOURCEDIR)/*.h) $(wildcard $(SOURCEDIR)/**/*.h)
 OBJECTS = $(patsubst $(SOURCEDIR)/%.c, $(OBJECTDIR)/%.o, $(SOURCES))
+
+CPP_SOURCES = $(wildcard $(SOURCEDIR)/*.cpp) $(wildcard $(SOURCEDIR)/**/*.cpp)
+CPP_OBJECTS = $(patsubst $(SOURCEDIR)/%.cpp, $(OBJECTDIR)/%.opp, $(CPP_SOURCES))
+
 DEPFILES = $(patsubst $(SOURCEDIR)/%.c, $(DEPDIR)/%.d, $(SOURCES))
 TARGET = outfile
 
@@ -21,13 +26,18 @@ TEST_TARGET = testout
 
 all: $(TARGET)
 
-$(TARGET): $(OBJECTS)
-	$(CC) -o $@ $^ $(CFLAGS)
+$(TARGET): $(OBJECTS) $(CPP_OBJECTS)
+	$(CPP) -o $@ $^ $(CFLAGS)
 
 $(OBJECTDIR)/%.o: $(SOURCEDIR)/%.c $(DEPDIR)/%.d
 	@mkdir -p $(@D)
 	@mkdir -p $(patsubst $(OBJECTDIR)%, $(DEPDIR)%, $(@D))
 	$(CC) $(DEPFLAGS) $(CFLAGS) -c $< -o $@
+
+$(OBJECTDIR)/%.opp: $(SOURCEDIR)/%.cpp $(DEPDIR)/%.d
+	@mkdir -p $(@D)
+	@mkdir -p $(patsubst $(OBJECTDIR)%, $(DEPDIR)%, $(@D))
+	$(CPP) $(DEPFLAGS) $(CFLAGS) -c $< -o $@
 
 clean:
 	rm -rf $(OBJECTDIR) $(TARGET) $(DEPDIR) $(TESTOBJDIR)

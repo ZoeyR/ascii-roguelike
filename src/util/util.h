@@ -2,7 +2,7 @@
 #define UTIL_H
 
 #include <stdlib.h>
-
+#include <stdio.h>
 typedef struct {} Unit;
 Unit unit();
 
@@ -37,6 +37,8 @@ Unit unit();
     if (_x.tag == OK) { \
         _r = _x.ok; \
     } else { \
+        printf("function %s unwrapped on err value\n at %s:%d\n", __PRETTY_FUNCTION__, __FILE__, __LINE__); \
+        fflush(stdout); \
         exit(_y); \
     } \
     _r; \

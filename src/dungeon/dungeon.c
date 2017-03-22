@@ -94,21 +94,7 @@ Dungeon create_dungeon(Options params) {
             dungeon.blocks[row][col].type != PILLAR &&
             dungeon.blocks[row][col].entity_id == 0) {
             
-            Entity monster;
-            monster.type = MONSTER;
-            monster.speed = better_rand(15) + 5;
-            monster.alive = true;
-            monster.monster.row = row;
-            monster.monster.col = col;
-            monster.monster.pc_last_seen[0] = row;
-            monster.monster.pc_last_seen[1] = col;
-        
-            monster.monster.smart = better_rand(1);
-            monster.monster.telepathic = better_rand(1);
-            monster.monster.tunneling = better_rand(1);
-            monster.monster.erratic = better_rand(1);
-        
-            EIdx id = add_entity(&dungeon.store, monster);
+            EIdx id = spawn_monster(dungeon.store, row, col);
             dungeon.blocks[row][col].entity_id = id;
             monsters_to_place--;
         }
@@ -132,14 +118,8 @@ Dungeon create_dungeon(Options params) {
         if (dungeon.blocks[row][col].type != ROCK &&
             dungeon.blocks[row][col].type != PILLAR &&
             dungeon.blocks[row][col].entity_id == 0) {
-                
-            Entity player;
-            player.player.row = row;
-            player.player.col = col;
-            player.type = PLAYER;
-            player.alive = true;
-            player.speed = 10;
-            EIdx player_id = add_entity(&dungeon.store, player);
+
+            EIdx player_id = spawn_player(dungeon.store, row, col);
             dungeon.blocks[row][col].entity_id = player_id;
             dungeon.player_id = player_id;
             break;
@@ -166,6 +146,7 @@ Dungeon create_dungeon(Options params) {
             break;
         }
     }
+
     return dungeon;
 }
 

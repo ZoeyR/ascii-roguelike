@@ -127,7 +127,7 @@ void print_dungeon(Dungeon *dungeon, int center_row, int center_col) {
             visible |= dungeon->blocks[bottom][right].type != ROCK;
 
             if (dungeon->blocks[row][col].entity_id != 0) {
-                print_entity(unwrap(entity_retrieve(&dungeon->store, dungeon->blocks[row][col].entity_id), 1), row - start_row, col - start_col);
+                print_entity(unwrap(entity_retrieve(dungeon->store, dungeon->blocks[row][col].entity_id), 1), row - start_row, col - start_col);
             } else {
                 print_block(dungeon->blocks[row][col], visible, row - start_row, col - start_col);
             }
@@ -331,17 +331,17 @@ static void print_block(DungeonBlock block, bool visible, int row, int col) {
 
 static void print_entity(Entity *entity, int row, int col) {
     init_pair(5, COLOR_GREEN, COLOR_BLACK);
-    if (entity->type == PLAYER) {
+    if (is_player(entity)) {
         wattron(game_screen, COLOR_PAIR(5));
         mvwprintw(game_screen, row, col, "@");
         return;
     }
 
     uint32_t print = 0;
-    print |= entity->monster.smart & 0x01;
-    print |= (entity->monster.telepathic & 0x01) << 1;
-    print |= (entity->monster.tunneling & 0x01) << 2;
-    print |= (entity->monster.erratic & 0x01) << 3;
+    print |= is_smart(entity) & 0x01;
+    print |= is_telepathic(entity) & 0x01 << 1;
+    print |= is_tunneling(entity) & 0x01 << 2;
+    print |= is_erratic(entity) & 0x01 << 3;
     wattron(game_screen, COLOR_PAIR(4));
     mvwprintw(game_screen, row, col, "%x", print);
 }

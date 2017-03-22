@@ -35,7 +35,7 @@ static void _rebuild_state(GameState *state);
 GameState init_state(Dungeon dungeon) {
     Heap heap = init_heap(_event_comparator, sizeof(Event));
 
-    for(EIdx i = 1; i <= dungeon.store.list.size; i++) {
+    for(EIdx i = 1; i <= store_size(dungeon.store); i++) {
         heap_push(&heap, &(Event){.turn = 0, .entity_id = i, .event_type = MOVE});
     }
 
@@ -55,25 +55,25 @@ static void _rebuild_state(GameState *state) {
 
 bool tick(GameState *state) {
     Event event = *(Event *)unwrap(heap_pop(&state->event_queue), 1);
-    Entity *entity = unwrap(entity_retrieve(&state->dungeon.store, event.entity_id), 1);
+    Entity *entity = unwrap(entity_retrieve(state->dungeon.store, event.entity_id), 1);
 
-    if (!entity->alive) {
+    if (!entity_alive(entity)) {
         return false;
     }
     
     bool rebuilt = false;
-    if (entity->type == MONSTER) {
+    if (!is_player(entity)) {
         rebuilt = _monster_move(state, entity);
-    } else if (entity->type == PLAYER) {
+    } else {
         rebuilt = _player_move(state, entity);
     }
 
     if (!rebuilt) {
-        event.turn = event.turn + 1000/entity->speed;
+        event.turn = event.turn + 1000/entity_speed(entity);
         heap_push(&state->event_queue, &event);
     }
 
-    return entity->type == PLAYER;
+    return is_player(entity);
 }
 
 static int _event_comparator(void* this, void* to) {
@@ -85,13 +85,14 @@ static int _event_comparator(void* this, void* to) {
 
 static bool _monster_move(GameState *state, Entity *entity) {
     Dungeon *dungeon = &state->dungeon;
-    int col = entity->monster.col;
-    int row = entity->monster.row;
-    relative_array(1, entity->monster.row, entity->monster.col, DUNGEON_HEIGHT, DUNGEON_WIDTH, );
+    int col = entity_col(entity);
+    int row = entity_row(entity);
+    relative_array(1, entity_row(entity), entity_col(entity), DUNGEON_HEIGHT, DUNGEON_WIDTH, );
     int adjacent[8][2] = {{top, left}   , {top, col}   , {top, right},
                           {row, left}   ,                {row, right},
                           {bottom, left}, {bottom, col}, {bottom, right}};
-    if (entity->monster.erratic && better_rand(1)) {
+
+    if (is_erratic(entity) && better_rand(1)) {
         int idx = better_rand(7);
         _move_to(state, entity, adjacent[idx][0], adjacent[idx][1]);
         return false;
@@ -99,11 +100,10 @@ static bool _monster_move(GameState *state, Entity *entity) {
 
      // get the location this monster is moving to
     Coord target = _get_target(state, entity);
-
-    if (entity->monster.smart) {
+    if (is_smart(entity)) {
         //first get the correct distance map
         Distances distance_map;
-        if (entity->monster.tunneling) {
+        if (is_tunneling(entity)) {
             distance_map = dijkstra(dungeon, target.row, target.col, _length_tunnel);
         } else {
             distance_map = dijkstra(dungeon, target.row, target.col, _length_no_tunnel);
@@ -132,13 +132,13 @@ static bool _monster_move(GameState *state, Entity *entity) {
             _move_to(state, entity, adjacent[lowest][0], adjacent[lowest][1]);
         }
     } else {
-        int to_row = entity->monster.row > target.row ? entity->monster.row + 1 : entity->monster.row - 1;
-        int to_col = entity->monster.col > target.col ? entity->monster.col + 1 : entity->monster.col - 1;
-        if (entity->monster.row == target.row) {
-            to_row = entity->monster.row;
+        int to_row = entity_row(entity) > target.row ? entity_row(entity) + 1 : entity_row(entity) - 1;
+        int to_col = entity_col(entity) > target.col ? entity_col(entity) + 1 : entity_col(entity) - 1;
+        if (entity_row(entity) == target.row) {
+            to_row = entity_row(entity);
         }
-        if (entity->monster.col == target.col) {
-            to_col = entity->monster.col;
+        if (entity_col(entity) == target.col) {
+            to_col = entity_col(entity);
         }
         _move_to(state, entity, to_row, to_col);
     }
@@ -148,12 +148,12 @@ static bool _monster_move(GameState *state, Entity *entity) {
 
 static bool _player_move(GameState *state, Entity *entity) {
     bool control_mode = true;
-    int col = entity->player.col;
-    int row = entity->player.row;
+    int col = entity_col(entity);
+    int row = entity_row(entity);
 
     int view_col = col;
     int view_row = row;
-    relative_array(1, entity->player.row, entity->player.col, DUNGEON_HEIGHT, DUNGEON_WIDTH, );
+    relative_array(1, entity_row(entity), entity_col(entity), DUNGEON_HEIGHT, DUNGEON_WIDTH, );
 
     // loop until a movement is actually made
     while (true) {
@@ -243,21 +243,22 @@ static bool _player_move(GameState *state, Entity *entity) {
 }
 
 static Coord _get_target(GameState *state, Entity *entity) {
-    Entity *player = unwrap(entity_retrieve(&state->dungeon.store, state->dungeon.player_id), 1);
+    Entity *player = unwrap(entity_retrieve(state->dungeon.store, state->dungeon.player_id), 1);
 
-    if (entity->monster.telepathic) {
-        return (Coord){.row = player->player.row, .col = player->player.col};
+
+    if (is_telepathic(entity)) {
+        return (Coord){.row = entity_row(player), .col = entity_col(player)};
     }
 
     // check for pc line of sight
     if (_can_see(state, 
-                 (Coord){.row = entity->monster.row, .col = entity->monster.col},
-                 (Coord){.row = player->player.row, .col = player->player.col})) {
-        return (Coord){.row = player->player.row, .col = player->player.col};
-    } else if (entity->monster.smart) {
-        return (Coord){.row = entity->monster.pc_last_seen[0], .col = entity->monster.pc_last_seen[1]};
+                 (Coord){.row = entity_row(entity), .col = entity_col(entity)},
+                 (Coord){.row = entity_row(player), .col = entity_col(player)})) {
+        return (Coord){.row = entity_row(player), .col = entity_col(player)};
+    } else if (is_smart(entity)) {
+        return (Coord){.row = player_last_seen_row(entity), .col = player_last_seen_col(entity)};
     } else {
-        return (Coord){.row = entity->monster.row, .col = entity->monster.col};
+        return (Coord){.row = entity_row(entity), .col = entity_col(entity)};
     }
 }
 
@@ -298,26 +299,22 @@ static void _move_to(GameState *state, Entity *entity, int to_row, int to_col) {
         dungeon->blocks[to_row][to_col].type == PILLAR) {
             return;
     }
-    int row = entity->type == MONSTER ? entity->monster.row : entity->player.row;
-    int col = entity->type == MONSTER ? entity->monster.col : entity->player.col;
+    int row = entity_row(entity);
+    int col = entity_col(entity);
     dungeon->blocks[row][col].entity_id = 0;
 
     // check if we have killed something
-    if (dungeon->blocks[to_row][to_col].entity_id != 0 && dungeon->blocks[to_row][to_col].entity_id != entity->index) {
-        Entity *entity = unwrap(entity_retrieve(&dungeon->store, dungeon->blocks[to_row][to_col].entity_id), 1);
-        entity->alive = false;
-        if (entity->type == MONSTER) {
+    if (dungeon->blocks[to_row][to_col].entity_id != 0 && dungeon->blocks[to_row][to_col].entity_id != entity_index(entity)) {
+        Entity *entity = unwrap(entity_retrieve(dungeon->store, dungeon->blocks[to_row][to_col].entity_id), 1);
+        kill_entity(entity);
+        if (!is_player(entity)) {
             dungeon->monster_count--;
         }
     }
-    dungeon->blocks[to_row][to_col].entity_id = entity->index;
-    if (entity->type == MONSTER) {
-        entity->monster.row = to_row;
-        entity->monster.col = to_col;
-    } else {
-        entity->player.row = to_row;
-        entity->player.col = to_col;
-    }
+    dungeon->blocks[to_row][to_col].entity_id = entity_index(entity);
+
+    set_entity_row(entity, to_row);
+    set_entity_col(entity, to_col);
 }
 
 static int _length_no_tunnel(void *context, Coordinate *this, Coordinate *to) {
