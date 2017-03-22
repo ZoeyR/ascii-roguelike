@@ -17,12 +17,12 @@ static void _fill_maze(Dungeon *dungeon);
 static void _unfreeze_rooms(Dungeon *dungeon);
 
 void rebuild_dungeon(Dungeon *dungeon) {
-    destroy_entity_store(&dungeon->store);
+    destroy_entity_store(dungeon->store);
     *dungeon = create_dungeon(dungeon->params);
 }
 
 void destroy_dungeon(Dungeon *dungeon) {
-    destroy_entity_store(&dungeon->store);
+    destroy_entity_store(dungeon->store);
 }
 
 Dungeon create_dungeon(Options params) {

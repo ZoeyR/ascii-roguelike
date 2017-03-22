@@ -48,7 +48,7 @@ int main(int argc, char *argv[]) {
     if (options.save) {
         save_dungeon(&state.dungeon, options.path);
     }
-    //destroy_state(&state);
+    destroy_state(&state);
 
     return 0;
 }
