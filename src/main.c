@@ -25,7 +25,7 @@ int main(int argc, char *argv[]) {
     options.windiness = 30;
     options.max_maze_size = 2000;
     options.imperfection = 2000;
-
+    
     init_screen(options.full_size);
     Dungeon dungeon;
     if (options.load) {

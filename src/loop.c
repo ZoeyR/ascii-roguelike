@@ -34,12 +34,15 @@ static void _rebuild_state(GameState *state);
 
 GameState init_state(Dungeon dungeon) {
     Heap heap = init_heap(_event_comparator, sizeof(Event));
+    View view;
 
     for(EIdx i = 1; i <= store_size(dungeon.store); i++) {
         heap_push(&heap, &(Event){.turn = 0, .entity_id = i, .event_type = MOVE});
     }
 
-    return (GameState){.event_queue = heap, .dungeon = dungeon};
+    // TODO build the first view
+    
+    return (GameState){.event_queue = heap, .dungeon = dungeon, .view = view};
 }
 
 void destroy_state(GameState *state) {
@@ -69,8 +72,11 @@ bool tick(GameState *state) {
     }
 
     if (!rebuilt) {
+        // TODO change view
         event.turn = event.turn + 1000/entity_speed(entity);
         heap_push(&state->event_queue, &event);
+    } else {
+        // change view
     }
 
     return is_player(entity);
