@@ -4,10 +4,13 @@
 #include <dungeon/entities.h>
 #include <util/distance.h>
 #include <dungeon/dungeon.h>
+#include <loop.h>
 
 void init_screen(bool full_size);
 
 int get_input(void);
+
+void print_view(GameState *state, int center_row, int center_col);
 
 void print_dungeon(Dungeon *dungeon, int center_row, int center_col);
 
