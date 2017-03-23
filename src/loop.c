@@ -31,18 +31,26 @@ static bool _can_see(GameState *state, Coord a, Coord b);
 static int _length_no_tunnel(void *context, Coordinate *this, Coordinate *to);
 static int _length_tunnel(void *context, Coordinate *this, Coordinate *to);
 static void _rebuild_state(GameState *state);
-
+static void _update_player_view(GameState *state);
 GameState init_state(Dungeon dungeon) {
+    GameState state;
     Heap heap = init_heap(_event_comparator, sizeof(Event));
     View view;
-
+    
     for(EIdx i = 1; i <= store_size(dungeon.store); i++) {
         heap_push(&heap, &(Event){.turn = 0, .entity_id = i, .event_type = MOVE});
     }
 
     // TODO build the first view
-    
-    return (GameState){.event_queue = heap, .dungeon = dungeon, .view = view};
+    for(int row = 0; row < DUNGEON_HEIGHT; row++) {
+        for(int col = 0; col < DUNGEON_WIDTH; col++) {
+            view.blocks[row][col] = (DungeonBlock){.type = ROCK, .hardness = 200, .region = 0, .immutable = false, .entity_id = 0};
+        }
+    }
+    state = (GameState){.event_queue = heap, .dungeon = dungeon, .view = view};
+    _update_player_view(&state);
+
+    return state;
 }
 
 void destroy_state(GameState *state) {
@@ -72,12 +80,16 @@ bool tick(GameState *state) {
     }
 
     if (!rebuilt) {
-        // TODO change view
         event.turn = event.turn + 1000/entity_speed(entity);
         heap_push(&state->event_queue, &event);
     } else {
-        // change view
+        for(int row = 0; row < DUNGEON_HEIGHT; row++) {
+            for(int col = 0; col < DUNGEON_WIDTH; col++) {
+                state->view.blocks[row][col] = (DungeonBlock){.type = ROCK, .hardness = 200, .region = 0, .immutable = false, .entity_id = 0};
+            }
+        }
     }
+    _update_player_view(state);
 
     return is_player(entity);
 }
@@ -154,6 +166,7 @@ static bool _monster_move(GameState *state, Entity *entity) {
 
 static bool _player_move(GameState *state, Entity *entity) {
     bool control_mode = true;
+    bool debug = false;
     int col = entity_col(entity);
     int row = entity_row(entity);
 
@@ -221,28 +234,36 @@ static bool _player_move(GameState *state, Entity *entity) {
             switch (ch) {
                 case 'k':
                 case '8':
-                    print_dungeon(&state->dungeon, --view_row, view_col);
+                    view_row--;
                     break;
                 case 'l':
                 case '6':
-                    print_dungeon(&state->dungeon, view_row, ++view_col);
+                    view_col++;
                     break;
                 case 'j':
                 case '2':
-                    print_dungeon(&state->dungeon, ++view_row, view_col);
+                    view_row++;
                     break;
                 case 'h':
                 case '4':
-                    print_dungeon(&state->dungeon, view_row, --view_col);
+                    view_col--;
+                    break;
+                case 'D':
+                    debug = !debug;
                     break;
                 case 27:
                     control_mode = true;
                     view_row = row;
                     view_col = col;
-                    print_dungeon(&state->dungeon, row, col);
                     break;
                 case 'Q':
                     exit(0);
+            }
+
+            if (debug) {
+                print_dungeon(&state->dungeon, view_row, view_col);
+            } else {
+                print_view(state, view_row, view_col);
             }
         }
     }
@@ -358,5 +379,30 @@ static int _length_tunnel(void *context, Coordinate *this, Coordinate *to) {
         }
     } else {
         return 1;
+    }
+}
+
+static void _update_player_view(GameState *state) {
+    Entity *player = unwrap(entity_retrieve(state->dungeon.store, state->dungeon.player_id), 1);
+    int p_row = entity_row(player);
+    int p_col = entity_col(player);
+
+    int l_row_bound = p_row - 4 < 0 ? 0 : p_row - 4;
+    int u_row_bound = p_row + 4 > DUNGEON_HEIGHT ? DUNGEON_HEIGHT : p_row + 4;
+
+    int l_col_bound = p_col - 4 < 0 ? 0 : p_col - 4;
+    int u_col_bound = p_col + 4 > DUNGEON_WIDTH ? DUNGEON_WIDTH : p_col + 4;
+
+    // clear out old entities
+    for(int row = 0; row < DUNGEON_HEIGHT; row++) {
+        for(int col = 0; col < DUNGEON_WIDTH; col++) {
+            state->view.blocks[row][col].entity_id = 0;
+        }
+    }
+
+    for(int row = l_row_bound; row < u_row_bound; row++) {
+        for(int col = l_col_bound; col < u_col_bound; col++) {
+            state->view.blocks[row][col] = state->dungeon.blocks[row][col];
+        }
     }
 }

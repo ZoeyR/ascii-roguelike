@@ -37,7 +37,7 @@ int main(int argc, char *argv[]) {
     GameState state = init_state(dungeon);
     while (1) {
         Entity *player = unwrap(entity_retrieve(state.dungeon.store, state.dungeon.player_id), 1);
-        print_dungeon(&state.dungeon, entity_row(player), entity_col(player));
+        print_view(&state, entity_row(player), entity_col(player));
         tick(&state);
         if (!entity_alive(unwrap(entity_retrieve(state.dungeon.store, state.dungeon.player_id), 1))) {
             printf("Player loses :(\n");

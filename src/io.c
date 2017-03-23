@@ -97,7 +97,7 @@ int get_input(void) {
     return wgetch(game_screen);
 }
 
-void print_dungeon(View *view, int center_row, int center_col) {
+void print_view(GameState *state, int center_row, int center_col) {
     wbkgd(main_screen, COLOR_PAIR(6));
     int start_row = center_row - (GAME_SCREEN_ROWS / 2);
     int end_row = start_row + GAME_SCREEN_ROWS;
@@ -117,16 +117,56 @@ void print_dungeon(View *view, int center_row, int center_col) {
             int bottom = (row >= DUNGEON_HEIGHT - 1) ? 0 : row + 1;
             bool visible = false;
 
-            visible |= view->blocks[top][left].type != ROCK;
-            visible |= view->blocks[top][col].type != ROCK;
-            visible |= view->blocks[top][right].type != ROCK;
-            visible |= view->blocks[row][left].type != ROCK;
-            visible |= view->blocks[row][right].type != ROCK;
-            visible |= view->blocks[bottom][left].type != ROCK;
-            visible |= view->blocks[bottom][col].type != ROCK;
-            visible |= view->blocks[bottom][right].type != ROCK;
+            visible |= state->view.blocks[top][left].type != ROCK;
+            visible |= state->view.blocks[top][col].type != ROCK;
+            visible |= state->view.blocks[top][right].type != ROCK;
+            visible |= state->view.blocks[row][left].type != ROCK;
+            visible |= state->view.blocks[row][right].type != ROCK;
+            visible |= state->view.blocks[bottom][left].type != ROCK;
+            visible |= state->view.blocks[bottom][col].type != ROCK;
+            visible |= state->view.blocks[bottom][right].type != ROCK;
 
-            if (view->blocks[row][col].entity_id != 0) {
+            if (state->view.blocks[row][col].entity_id != 0) {
+                print_entity(unwrap(entity_retrieve(state->dungeon.store, state->view.blocks[row][col].entity_id), 1), row - start_row, col - start_col);
+            } else {
+                print_block(state->view.blocks[row][col], visible, row - start_row, col - start_col);
+            }
+        }
+    }
+    box(game_screen, 0, 0);
+    wrefresh(main_screen);
+}
+
+void print_dungeon(Dungeon *dungeon, int center_row, int center_col) {
+    wbkgd(main_screen, COLOR_PAIR(6));
+    int start_row = center_row - (GAME_SCREEN_ROWS / 2);
+    int end_row = start_row + GAME_SCREEN_ROWS;
+    int start_col = center_col - (GAME_SCREEN_COLS / 2);
+    int end_col = start_col + GAME_SCREEN_COLS;
+    for(int row = start_row; row < end_row; row++) {
+        for(int col = start_col; col < end_col; col++) {
+            // need special logic if we are printing outside view bounds
+            if (col < 0 || col >= DUNGEON_WIDTH || row < 0 || row >= DUNGEON_HEIGHT) {
+                mvwprintw(game_screen, row - start_row, col - start_col, " ");
+                continue;
+            }
+
+            int right = (col >= DUNGEON_WIDTH - 1) ? 0 : col + 1;
+            int left = (col <= 0) ? DUNGEON_WIDTH - 1 : col - 1;
+            int top = (row <= 0) ? DUNGEON_HEIGHT - 1 : row - 1;
+            int bottom = (row >= DUNGEON_HEIGHT - 1) ? 0 : row + 1;
+            bool visible = false;
+
+            visible |= dungeon->blocks[top][left].type != ROCK;
+            visible |= dungeon->blocks[top][col].type != ROCK;
+            visible |= dungeon->blocks[top][right].type != ROCK;
+            visible |= dungeon->blocks[row][left].type != ROCK;
+            visible |= dungeon->blocks[row][right].type != ROCK;
+            visible |= dungeon->blocks[bottom][left].type != ROCK;
+            visible |= dungeon->blocks[bottom][col].type != ROCK;
+            visible |= dungeon->blocks[bottom][right].type != ROCK;
+
+            if (dungeon->blocks[row][col].entity_id != 0) {
                 print_entity(unwrap(entity_retrieve(dungeon->store, dungeon->blocks[row][col].entity_id), 1), row - start_row, col - start_col);
             } else {
                 print_block(dungeon->blocks[row][col], visible, row - start_row, col - start_col);
@@ -338,10 +378,10 @@ static void print_entity(Entity *entity, int row, int col) {
     }
 
     uint32_t print = 0;
-    print |= is_smart(entity) & 0x01;
-    print |= is_telepathic(entity) & 0x01 << 1;
-    print |= is_tunneling(entity) & 0x01 << 2;
-    print |= is_erratic(entity) & 0x01 << 3;
+    print |= is_smart(entity) ? 1 : 0;
+    print |= (is_telepathic(entity) ? 1 : 0) << 1;
+    print |= (is_tunneling(entity) ? 1 : 0) << 2;
+    print |= (is_erratic(entity) ? 1 : 0) << 3;
     wattron(game_screen, COLOR_PAIR(4));
     mvwprintw(game_screen, row, col, "%x", print);
 }
