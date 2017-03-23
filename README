@@ -1,7 +1,14 @@
-The dungeon is printed in an 80x24 area. The top row and bottom 2 rows are
-dedicated to status areas. The game area is outlined by a border, giving the
-play area a size of 78x19. No additional mappings other than the ones specified
-in the requirements document have been implemented.
+The player has a 9x9 fog of war surrounding them, extending four blocks in
+every direction. Monsters are only displayed when they are in the fog of war,
+the player does not remember monster positions. A new keybinding has been
+added, 'D'. when this key is pressed in look mode a debug view is toggled that
+shows the entire map without a fog of war. The primary purpose of this is to
+validate that the player view and dungeon match up.
 
-Additionally, a new flag has been added to the program "-f", which will cause
-game to take up the entire terminal size if your terminal is larger than 80x24.
+The implementation differs slightly from the assignment specification. Since my
+code is not based on the professors I only had one entity file. As such, I only
+have one .cpp file in the assignment. Additionally, my code was structured such
+that it didn't make sense for the player to hold onto its own view, since
+entities were originally designed to be eventually use composition instead of
+inheritance, and nesting the view with the player would complicate things
+later.

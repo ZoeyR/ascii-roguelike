@@ -388,10 +388,10 @@ static void _update_player_view(GameState *state) {
     int p_col = entity_col(player);
 
     int l_row_bound = p_row - 4 < 0 ? 0 : p_row - 4;
-    int u_row_bound = p_row + 4 > DUNGEON_HEIGHT ? DUNGEON_HEIGHT : p_row + 4;
+    int u_row_bound = p_row + 5 > DUNGEON_HEIGHT ? DUNGEON_HEIGHT : p_row + 5;
 
     int l_col_bound = p_col - 4 < 0 ? 0 : p_col - 4;
-    int u_col_bound = p_col + 4 > DUNGEON_WIDTH ? DUNGEON_WIDTH : p_col + 4;
+    int u_col_bound = p_col + 5 > DUNGEON_WIDTH ? DUNGEON_WIDTH : p_col + 5;
 
     // clear out old entities
     for(int row = 0; row < DUNGEON_HEIGHT; row++) {

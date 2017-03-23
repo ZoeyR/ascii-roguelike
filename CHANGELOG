@@ -82,3 +82,14 @@
 * Add camera controls
 * Add stairs
 * Add fullscreen option
+
+2017-3-21
+---------
+* change makefile to work with c++
+* convert character .c file to .cpp file
+* add -std=c++14 to makefile so compilation works on fedora
+
+2017-3-22
+---------
+* create fog-of-war
+* correct fog distance
