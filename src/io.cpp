@@ -117,17 +117,17 @@ void print_view(GameState *state, int center_row, int center_col) {
             int bottom = (row >= DUNGEON_HEIGHT - 1) ? 0 : row + 1;
             bool visible = false;
 
-            visible |= state->view.blocks[top][left].type != ROCK;
-            visible |= state->view.blocks[top][col].type != ROCK;
-            visible |= state->view.blocks[top][right].type != ROCK;
-            visible |= state->view.blocks[row][left].type != ROCK;
-            visible |= state->view.blocks[row][right].type != ROCK;
-            visible |= state->view.blocks[bottom][left].type != ROCK;
-            visible |= state->view.blocks[bottom][col].type != ROCK;
-            visible |= state->view.blocks[bottom][right].type != ROCK;
+            visible |= state->view.blocks[top][left].type != DungeonBlock::ROCK;
+            visible |= state->view.blocks[top][col].type != DungeonBlock::ROCK;
+            visible |= state->view.blocks[top][right].type != DungeonBlock::ROCK;
+            visible |= state->view.blocks[row][left].type != DungeonBlock::ROCK;
+            visible |= state->view.blocks[row][right].type != DungeonBlock::ROCK;
+            visible |= state->view.blocks[bottom][left].type != DungeonBlock::ROCK;
+            visible |= state->view.blocks[bottom][col].type != DungeonBlock::ROCK;
+            visible |= state->view.blocks[bottom][right].type != DungeonBlock::ROCK;
 
             if (state->view.blocks[row][col].entity_id != 0) {
-                print_entity(unwrap(entity_retrieve(state->dungeon.store, state->view.blocks[row][col].entity_id), 1), row - start_row, col - start_col);
+                print_entity(state->dungeon.store->get(state->view.blocks[row][col].entity_id).unwrap(), row - start_row, col - start_col);
             } else {
                 print_block(state->view.blocks[row][col], visible, row - start_row, col - start_col);
             }
@@ -157,17 +157,17 @@ void print_dungeon(Dungeon *dungeon, int center_row, int center_col) {
             int bottom = (row >= DUNGEON_HEIGHT - 1) ? 0 : row + 1;
             bool visible = false;
 
-            visible |= dungeon->blocks[top][left].type != ROCK;
-            visible |= dungeon->blocks[top][col].type != ROCK;
-            visible |= dungeon->blocks[top][right].type != ROCK;
-            visible |= dungeon->blocks[row][left].type != ROCK;
-            visible |= dungeon->blocks[row][right].type != ROCK;
-            visible |= dungeon->blocks[bottom][left].type != ROCK;
-            visible |= dungeon->blocks[bottom][col].type != ROCK;
-            visible |= dungeon->blocks[bottom][right].type != ROCK;
+            visible |= dungeon->blocks[top][left].type != DungeonBlock::ROCK;
+            visible |= dungeon->blocks[top][col].type != DungeonBlock::ROCK;
+            visible |= dungeon->blocks[top][right].type != DungeonBlock::ROCK;
+            visible |= dungeon->blocks[row][left].type != DungeonBlock::ROCK;
+            visible |= dungeon->blocks[row][right].type != DungeonBlock::ROCK;
+            visible |= dungeon->blocks[bottom][left].type != DungeonBlock::ROCK;
+            visible |= dungeon->blocks[bottom][col].type != DungeonBlock::ROCK;
+            visible |= dungeon->blocks[bottom][right].type != DungeonBlock::ROCK;
 
             if (dungeon->blocks[row][col].entity_id != 0) {
-                print_entity(unwrap(entity_retrieve(dungeon->store, dungeon->blocks[row][col].entity_id), 1), row - start_row, col - start_col);
+                print_entity(dungeon->store->get(dungeon->blocks[row][col].entity_id).unwrap(), row - start_row, col - start_col);
             } else {
                 print_block(dungeon->blocks[row][col], visible, row - start_row, col - start_col);
             }
@@ -210,7 +210,7 @@ void save_dungeon(Dungeon *dungeon, char* path) {
     for(int row = 0; row < DUNGEON_HEIGHT; row++) {
         for(int col = 0; col < DUNGEON_WIDTH; col++) {
             DungeonBlock block = dungeon->blocks[row][col];
-            if(block.type != ROCK) {
+            if(block.type != DungeonBlock::ROCK) {
                 fputc(0, file);
             } else if (block.immutable) {
                 fputc(255, file);
@@ -220,11 +220,11 @@ void save_dungeon(Dungeon *dungeon, char* path) {
         }
     }
 
-    int room_store_size = 0;
+    uint32_t room_store_size = 0;
     for(int row = 0; row < DUNGEON_HEIGHT; row++) {
         for(int col = 0; col < DUNGEON_WIDTH; col++) {
             DungeonBlock block = dungeon->blocks[row][col];
-            if(block.type != ROCK && block.type != HALL) {
+            if(block.type != DungeonBlock::ROCK && block.type != DungeonBlock::HALL) {
                 fputc(col, file);
                 fputc(row, file);
                 fputc(1, file);
@@ -280,13 +280,13 @@ Dungeon load_dungeon(char* path) {
             dungeon.blocks[row][col].region = 0;
 
             if (hardness == 0) {
-                dungeon.blocks[row][col].type = HALL;
+                dungeon.blocks[row][col].type = DungeonBlock::HALL;
                 dungeon.blocks[row][col].immutable = false;
             } else if (hardness == 255) {
-                dungeon.blocks[row][col].type = ROCK;
+                dungeon.blocks[row][col].type = DungeonBlock::ROCK;
                 dungeon.blocks[row][col].immutable = true;
             } else {
-                dungeon.blocks[row][col].type = ROCK;
+                dungeon.blocks[row][col].type = DungeonBlock::ROCK;
             }
         }
     }
@@ -299,7 +299,7 @@ Dungeon load_dungeon(char* path) {
 
         for(int h = 0; h < height; h++) {
             for(int w = 0; w < width; w++) {
-                dungeon.blocks[row + h][col + w].type = FLOOR;
+                dungeon.blocks[row + h][col + w].type = DungeonBlock::FLOOR;
             }
         }
     }
@@ -327,7 +327,7 @@ Dungeon load_dungeon(char* path) {
         for(int col = 0; col < DUNGEON_WIDTH; col++) {
             // load row major type and real hardness
             dungeon.blocks[row][col].hardness = fgetc(file);
-            dungeon.blocks[row][col].type = fgetc(file);
+            dungeon.blocks[row][col].type = static_cast<DungeonBlock::Type>(fgetc(file));
         }
     }
     
@@ -339,29 +339,29 @@ static void print_block(DungeonBlock block, bool visible, int row, int col) {
     char c;
     switch(block.type) {
         default:
-        case ROCK:
+        case DungeonBlock::ROCK:
             if (visible) {
                 print_s_hardness(' ', block, row, col);
             } else {
                 mvwprintw(game_screen, row, col, " ");
             }
             return;
-        case HALL:
+        case DungeonBlock::HALL:
             c = ':';
             break;
-        case FLOOR:
+        case DungeonBlock::FLOOR:
             c = '.';
             break;
-        case RUBBLE:
+        case DungeonBlock::RUBBLE:
             c = 'r';
             break;
-        case PILLAR:
+        case DungeonBlock::PILLAR:
             c = 'I';
             break;
-        case UPSTAIRS:
+        case DungeonBlock::UPSTAIRS:
             c = '<';
             break;
-        case DOWNSTAIRS:
+        case DungeonBlock::DOWNSTAIRS:
             c = '>';
             break;
     }
@@ -373,17 +373,10 @@ static void print_entity(Entity *entity, int row, int col) {
     init_pair(5, COLOR_GREEN, COLOR_BLACK);
     if (is_player(entity)) {
         wattron(game_screen, COLOR_PAIR(5));
-        mvwprintw(game_screen, row, col, "@");
-        return;
+    } else {
+        wattron(game_screen, COLOR_PAIR(4));
     }
-
-    uint32_t print = 0;
-    print |= is_smart(entity) ? 1 : 0;
-    print |= (is_telepathic(entity) ? 1 : 0) << 1;
-    print |= (is_tunneling(entity) ? 1 : 0) << 2;
-    print |= (is_erratic(entity) ? 1 : 0) << 3;
-    wattron(game_screen, COLOR_PAIR(4));
-    mvwprintw(game_screen, row, col, "%x", print);
+    mvwprintw(game_screen, row, col, "%c", entity->print);
 }
 
 static void print_s_hardness(char c, DungeonBlock block, int row, int col) {

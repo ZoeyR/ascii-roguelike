@@ -31,7 +31,7 @@ typedef struct {
 } Options;
 
 typedef struct {
-    enum {
+    enum Type {
         ROCK,
         HALL,
         FLOOR,

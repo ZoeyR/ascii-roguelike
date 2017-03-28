@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <string>
 #include <limits.h>
 
 #include <util/util.h>
@@ -6,19 +7,20 @@
 Unit unit() {
     return (Unit){};
 }
-IntParseResult parse_int(char* str) {
-    char* endptr = "hold";
+
+Result<int, IntParseError> parse_int(char* str) {
+    char* endptr = new char;
     long int large = strtol(str, &endptr, 10);
 
     if (large > INT_MAX || large < INT_MIN) {
-        return (IntParseResult)err(TOO_LARGE);
+        return Result<int, IntParseError>(TOO_LARGE);
     }
 
     if (endptr[0] != '\0') {
-        return (IntParseResult)err(INVALID_STRING);
+        return Result<int, IntParseError>(INVALID_STRING);
     }
 
-    return (IntParseResult)ok((int) large);
+    return Result<int, IntParseError>((int)large);
 }
 
 int better_rand(int limit) {

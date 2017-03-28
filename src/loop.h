@@ -10,10 +10,34 @@ typedef struct {
 } View;
 
 typedef struct {
-    Heap event_queue;
-    Dungeon dungeon;
-    View view;
-} GameState;
+    int turn;
+    EIdx entity_id;
+    enum {
+        MOVE
+    } event_type;
+} Event;
+
+typedef struct {
+    int row;
+    int col;
+} Coord;
+
+class GameState {
+    Heap<Event> event_queue;
+
+    bool monster_move(Monster *entity);
+    bool player_move(Player *entity);
+    void move_to(Entity *entity, int row, int col);
+    Coord get_target(Monster *entity);
+    bool can_see(Coord a, Coord b);
+    void new_floor();
+    void update_player_view();
+    public:
+        Dungeon dungeon;
+        View view;
+        GameState(Dungeon dungeon);
+        bool tick();
+};
 
 
 GameState init_state(Dungeon dungeon);

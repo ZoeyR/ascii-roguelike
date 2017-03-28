@@ -38,27 +38,23 @@ static DungeonRoom create_rectangle(int width, int height) {
     room.width = width;
     room.height = height;
     
-    // first fill the room with rock
+    // first fill the room with DungeonBlock::ROCK
     for(int row = 0; row < ROOM_MAX_HEIGHT; row++) {
         for(int col = 0; col < ROOM_MAX_WIDTH; col++) {
-            char hardness = (rand() % 2) + 1;
-            DungeonBlock block = {.type = ROCK, .hardness = hardness, .region = 0, .immutable = false};
+            DungeonBlock block = {.type = DungeonBlock::ROCK, .hardness = 0, .region = 0, .immutable = false, .entity_id = 0};
             room.blocks[row][col] = block;
         }
     }
 
-    // then fill in the room floor + walls
+    // then fill in the room DungeonBlock::FLOOR + walls
     for(int row = start_row; row < start_row + height; row++) {
         for(int col = start_col; col < start_col + width; col++) {
-            char type;
             if (col == start_col || col == (start_col + width - 1) || 
                     row == start_row || row == (start_row + height - 1)) {
-                type = ROCK;
+                room.blocks[row][col].type = DungeonBlock::ROCK;
             } else {
-                type = FLOOR;
+                room.blocks[row][col].type = DungeonBlock::FLOOR;
             }
-
-            room.blocks[row][col].type = type;
         }
     }
 
@@ -78,11 +74,10 @@ static DungeonRoom create_ellipse(int width, int height) {
     room.width = width;
     room.height = height;
 
-    // first fill the room with rock
+    // first fill the room with DungeonBlock::ROCK
     for(int row = 0; row < ROOM_MAX_HEIGHT; row++) {
         for(int col = 0; col < ROOM_MAX_WIDTH; col++) {
-            char hardness = (rand() % 2) + 1;
-            DungeonBlock block = {.type = ROCK, .hardness = hardness, .region = 0, .immutable = false};
+            DungeonBlock block = {.type = DungeonBlock::ROCK, .hardness = 0, .region = 0, .immutable = false, .entity_id = 0};
             room.blocks[row][col] = block;
         }
     }
@@ -92,14 +87,14 @@ static DungeonRoom create_ellipse(int width, int height) {
 
     for(int row = 0; row < ROOM_MAX_HEIGHT; row++) {
         for(int col = 0; col < ROOM_MAX_WIDTH; col++) {
-            char type;
+            DungeonBlock::Type type;
             double x_2 = pow(col - (ROOM_MAX_WIDTH / 2), 2.0);
             double y_2 = pow(row - (ROOM_MAX_HEIGHT / 2), 2.0);
 
             if (((x_2/x_radius_2) + (y_2/y_radius_2)) < 1) {
-                type = FLOOR;
+                type = DungeonBlock::FLOOR;
             } else {
-                type = ROCK;
+                type = DungeonBlock::ROCK;
             }
 
             room.blocks[row][col].type = type;
@@ -112,8 +107,8 @@ static DungeonRoom create_ellipse(int width, int height) {
     return room;
 }
 
-// currently places pillars in the room, walls and pillars can support a
-// ceiling in a 9x9 area. So pillars are places appropriately
+// currently places DungeonBlock::PILLARs in the room, walls and DungeonBlock::PILLARs can support a
+// ceiling in a 9x9 area. So DungeonBlock::PILLARs are places appropriately
 static void decorate_room(DungeonRoom *room) {
     char width = room->width;
     char height = room->height;
@@ -125,11 +120,11 @@ static void decorate_room(DungeonRoom *room) {
 
     for(int row = 5 + start_row; row < uncovered_height + 5 + start_row; row += 9) {
         for(int col = 5 + start_col; col < uncovered_width + 5 + start_col; col += 9) {
-            room->blocks[row][col].type = PILLAR;
-            room->blocks[row][2 * start_col + width - col - 1].type = PILLAR;
-            room->blocks[2 * start_row + height - row - 1][col].type = PILLAR;
+            room->blocks[row][col].type = DungeonBlock::PILLAR;
+            room->blocks[row][2 * start_col + width - col - 1].type = DungeonBlock::PILLAR;
+            room->blocks[2 * start_row + height - row - 1][col].type = DungeonBlock::PILLAR;
             room->blocks[2 * start_row + height - row - 1]
-                [2 * start_col + width - col - 1].type = PILLAR;
+                [2 * start_col + width - col - 1].type = DungeonBlock::PILLAR;
         }
     }
 }

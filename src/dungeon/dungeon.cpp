@@ -1,3 +1,5 @@
+#include <vector>
+#include <algorithm>
 #include <math.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -7,7 +9,6 @@
 #include <dungeon/dungeon.h>
 #include <io.h>
 #include <util/util.h>
-#include <collections/list.h>
 
 static void _generate_veins(Dungeon *dungeon, int hardness, int liklihood);
 static void _generate_maze(Dungeon *dungeon, int windiness, int max_maze_size);
@@ -17,24 +18,24 @@ static void _fill_maze(Dungeon *dungeon);
 static void _unfreeze_rooms(Dungeon *dungeon);
 
 void rebuild_dungeon(Dungeon *dungeon) {
-    destroy_entity_store(dungeon->store);
+    delete dungeon->store;
     *dungeon = create_dungeon(dungeon->params);
 }
 
 void destroy_dungeon(Dungeon *dungeon) {
-    destroy_entity_store(dungeon->store);
+    delete dungeon->store;
 }
 
 Dungeon create_dungeon(Options params) {
     Dungeon dungeon;
     dungeon.regions = 0;
-    dungeon.store = init_entity_store();
+    dungeon.store = new EntityStore();
     dungeon.monster_count = params.monsters;
     dungeon.params = params;
     // fill dungeon with random noise
     for(int row = 0; row < DUNGEON_HEIGHT; row++) {
         for(int col = 0; col < DUNGEON_WIDTH; col++) {
-            char hardness;
+            uint8_t hardness;
             bool immutable;
             if (col == 0 || col == DUNGEON_WIDTH - 1 || 
                     row == 0 || row == DUNGEON_HEIGHT - 1) {
@@ -45,12 +46,12 @@ Dungeon create_dungeon(Options params) {
                 immutable = false;
             }
 
-            DungeonBlock block = {.type = ROCK, .hardness = hardness, .region = 0, .immutable = immutable, .entity_id = 0};
+            DungeonBlock block = {.type = DungeonBlock::ROCK, .hardness = hardness, .region = 0, .immutable = immutable, .entity_id = 0};
             dungeon.blocks[row][col] = block;
         }
     }
 
-    // create veins of hard and soft rock
+    // create veins of hard and soft DungeonBlock::ROCK
     _generate_veins(&dungeon, params.hardness, 300);
 
     // generate enough rooms for the dungeon to be reasonably filled
@@ -90,11 +91,11 @@ Dungeon create_dungeon(Options params) {
         int row = better_rand(DUNGEON_HEIGHT - 1);
         int col = better_rand(DUNGEON_WIDTH - 1);
 
-        if (dungeon.blocks[row][col].type != ROCK &&
-            dungeon.blocks[row][col].type != PILLAR &&
+        if (dungeon.blocks[row][col].type != DungeonBlock::ROCK &&
+            dungeon.blocks[row][col].type != DungeonBlock::PILLAR &&
             dungeon.blocks[row][col].entity_id == 0) {
             
-            EIdx id = spawn_monster(dungeon.store, row, col);
+            EIdx id = dungeon.store->spawn_monster(row, col);
             dungeon.blocks[row][col].entity_id = id;
             monsters_to_place--;
         }
@@ -115,11 +116,11 @@ Dungeon create_dungeon(Options params) {
         int row = better_rand(DUNGEON_HEIGHT - 1);
         int col = better_rand(DUNGEON_WIDTH - 1);
 
-        if (dungeon.blocks[row][col].type != ROCK &&
-            dungeon.blocks[row][col].type != PILLAR &&
+        if (dungeon.blocks[row][col].type != DungeonBlock::ROCK &&
+            dungeon.blocks[row][col].type != DungeonBlock::PILLAR &&
             dungeon.blocks[row][col].entity_id == 0) {
 
-            EIdx player_id = spawn_player(dungeon.store, row, col);
+            EIdx player_id = dungeon.store->spawn_player(row, col);
             dungeon.blocks[row][col].entity_id = player_id;
             dungeon.player_id = player_id;
             break;
@@ -131,8 +132,8 @@ Dungeon create_dungeon(Options params) {
         int row = better_rand(DUNGEON_HEIGHT - 1);
         int col = better_rand(DUNGEON_WIDTH - 1);
 
-        if (dungeon.blocks[row][col].type == FLOOR) {
-            dungeon.blocks[row][col].type = UPSTAIRS;
+        if (dungeon.blocks[row][col].type == DungeonBlock::FLOOR) {
+            dungeon.blocks[row][col].type = DungeonBlock::UPSTAIRS;
             break;
         }
     }
@@ -141,8 +142,8 @@ Dungeon create_dungeon(Options params) {
         int row = better_rand(DUNGEON_HEIGHT - 1);
         int col = better_rand(DUNGEON_WIDTH - 1);
 
-        if (dungeon.blocks[row][col].type == FLOOR) {
-            dungeon.blocks[row][col].type = DOWNSTAIRS;
+        if (dungeon.blocks[row][col].type == DungeonBlock::FLOOR) {
+            dungeon.blocks[row][col].type = DungeonBlock::DOWNSTAIRS;
             break;
         }
     }
@@ -233,12 +234,12 @@ static bool _can_place_room(Dungeon *dungeon, DungeonRoom *room, int col, int ro
         for (col = dungeon_col_start; col < dungeon_col_end; col++) {
             int room_row = row - dungeon_row_start + room->start_row;
             int room_col = col - dungeon_col_start + room->start_col;
-            if (dungeon->blocks[row][col].type != ROCK || dungeon->blocks[row][col].immutable || 
+            if (dungeon->blocks[row][col].type != DungeonBlock::ROCK || dungeon->blocks[row][col].immutable || 
             dungeon->blocks[row][col].hardness >= HARDNESS_TIER_3 || dungeon->blocks[row][col].hardness < HARDNESS_TIER_1) {
                 return false;
             }
 
-            if (room->blocks[room_row][room_col].type == ROCK) {
+            if (room->blocks[room_row][room_col].type == DungeonBlock::ROCK) {
                 continue;
             }
 
@@ -287,24 +288,24 @@ static void _generate_maze(Dungeon *dungeon, int windiness, int max_maze_size) {
 
     for (int row = 1; row < DUNGEON_HEIGHT; row += 2) {
         for (int col = 1; col < DUNGEON_WIDTH; col += 2) {
-            if (dungeon->blocks[row][col].type != ROCK || dungeon->blocks[row][col].immutable || 
+            if (dungeon->blocks[row][col].type != DungeonBlock::ROCK || dungeon->blocks[row][col].immutable || 
             dungeon->blocks[row][col].hardness >= HARDNESS_TIER_3 || dungeon->blocks[row][col].hardness < HARDNESS_TIER_1) {
                 continue;
             }
 
             dungeon->regions++;
             // carve this section of the maze
-            List carved_list = init_list(sizeof(Coord));
-            dungeon->blocks[row][col].type = HALL;
+            std::vector<Coord> carved_list;
+            dungeon->blocks[row][col].type = DungeonBlock::HALL;
             dungeon->blocks[row][col].region = dungeon->regions;
 
-            list_push(&carved_list, (void *)&(Coord){.row = row, .col = col});
+            carved_list.push_back((Coord){.row = row, .col = col});
 
             int maze_size = 0;
-            while(carved_list.size > 0 && maze_size++ < max_maze_size) {
-                list_shuffle(&carved_list);
-                Coord coord = *(Coord *)expect(list_pop(&carved_list), "list was empty", 1);
-
+            while(carved_list.size() > 0 && maze_size++ < max_maze_size) {
+                std::random_shuffle(carved_list.begin(), carved_list.end());
+                Coord coord = carved_list.back();
+                carved_list.pop_back();
                 // decompose the coordinate
                 int col = coord.col;
                 int row = coord.row;
@@ -326,7 +327,7 @@ static void _generate_maze(Dungeon *dungeon, int windiness, int max_maze_size) {
                 for (int i = 0; i < 4; i++) {
                     DungeonBlock block_a = dungeon->blocks[adjacent[i][0][0]][adjacent[i][0][1]];
                     DungeonBlock block_b = dungeon->blocks[adjacent[i][1][0]][adjacent[i][1][1]];
-                    if(block_a.type != ROCK && block_b.type != ROCK) {
+                    if(block_a.type != DungeonBlock::ROCK && block_b.type != DungeonBlock::ROCK) {
                         total_carved++;
                         carved_index = i;
                     }
@@ -346,8 +347,8 @@ static void _generate_maze(Dungeon *dungeon, int windiness, int max_maze_size) {
                 for (int i = 0; i < 4; i++) {
                     DungeonBlock block_a = dungeon->blocks[adjacent[i][0][0]][adjacent[i][0][1]];
                     DungeonBlock block_b = dungeon->blocks[adjacent[i][1][0]][adjacent[i][1][1]];
-                    if((!block_a.immutable && block_a.type == ROCK && block_a.hardness < HARDNESS_TIER_3 && block_a.hardness >= HARDNESS_TIER_1) && 
-                    (!block_b.immutable && block_b.type == ROCK && block_b.hardness < HARDNESS_TIER_3 && block_a.hardness >= HARDNESS_TIER_1)) {
+                    if((!block_a.immutable && block_a.type == DungeonBlock::ROCK && block_a.hardness < HARDNESS_TIER_3 && block_a.hardness >= HARDNESS_TIER_1) && 
+                    (!block_b.immutable && block_b.type == DungeonBlock::ROCK && block_b.hardness < HARDNESS_TIER_3 && block_a.hardness >= HARDNESS_TIER_1)) {
                         can_carve[i] = true;
                         int weight = block_a.hardness + block_b.hardness;
                         if (i == last_dir) {
@@ -380,16 +381,14 @@ static void _generate_maze(Dungeon *dungeon, int windiness, int max_maze_size) {
                 int row_b = adjacent[next_dir][1][0];
                 int col_b = adjacent[next_dir][1][1];
 
-                dungeon->blocks[row_a][col_a].type = HALL;
-                dungeon->blocks[row_b][col_b].type = HALL;
+                dungeon->blocks[row_a][col_a].type = DungeonBlock::HALL;
+                dungeon->blocks[row_b][col_b].type = DungeonBlock::HALL;
                 dungeon->blocks[row_a][col_a].region = dungeon->regions;
                 dungeon->blocks[row_b][col_b].region = dungeon->regions;
 
-                list_push(&carved_list, &coord);
-                list_push(&carved_list, &(Coord){.row = row_b, .col = col_b});
+                carved_list.push_back(coord);
+                carved_list.push_back((Coord){.row = row_b, .col = col_b});
             }
-
-            destroy_list(&carved_list);
         }
     }
 }
@@ -409,7 +408,7 @@ static void _fill_maze_helper(Dungeon *dungeon, int row, int col) {
                                 {row, left}};
     
     for (int i = 0; i < 4; i++) {
-        if (dungeon->blocks[adjacent[i][0]][adjacent[i][1]].type != ROCK) {
+        if (dungeon->blocks[adjacent[i][0]][adjacent[i][1]].type != DungeonBlock::ROCK) {
             total_open++;
             last_open_row = adjacent[i][0];
             last_open_col = adjacent[i][1];
@@ -417,12 +416,12 @@ static void _fill_maze_helper(Dungeon *dungeon, int row, int col) {
     }
 
     if (total_open == 1) {
-        dungeon->blocks[row][col].type = ROCK;
+        dungeon->blocks[row][col].type = DungeonBlock::ROCK;
         _fill_maze_helper(dungeon, last_open_row, last_open_col);
     }
 
     if (total_open == 0) {
-         dungeon->blocks[row][col].type = ROCK;
+         dungeon->blocks[row][col].type = DungeonBlock::ROCK;
     }
 }
 

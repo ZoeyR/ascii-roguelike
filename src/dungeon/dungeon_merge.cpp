@@ -11,7 +11,7 @@
 // * while there are connectors in list
 //   * pop connector in list
 //   * if connector connects to a non-merged region, merge
-//   * to merge, turn connector into hall tile, then flood fill the region
+//   * to merge, turn connector into DungeonBlock::HALL tile, then flood fill the region
 //   * small chance to open a connector even if connects to merged region, makes dungeon imperfect.
 
 typedef struct {
@@ -45,7 +45,7 @@ static void _flood_fill(Dungeon *dungeon, int col, int row, int target, int repl
 
 void merge_regions(Dungeon *dungeon, int extra_hole_chance) {
     int regions = dungeon->regions;
-    MergeTracker *trackers = malloc(sizeof(MergeTracker) * regions);
+    MergeTracker *trackers = (MergeTracker *)malloc(sizeof(MergeTracker) * regions);
     
     for(int i = 0; i < regions; i++) {
         ConnectorList list = _init_list();
@@ -55,7 +55,9 @@ void merge_regions(Dungeon *dungeon, int extra_hole_chance) {
     // find all connectors in the dungeon
     for (int row = 0; row < DUNGEON_HEIGHT; row++) {
         for (int col = 0; col < DUNGEON_WIDTH; col++) {
-            Connector connector = {.row = row, .col = col};
+            Connector connector;
+            connector.row = row;
+            connector.col = col;
             if (_make_connector(dungeon, &connector)) {
                 int col = connector.regions[0].col;
                 int row = connector.regions[0].row;
@@ -88,7 +90,7 @@ void merge_regions(Dungeon *dungeon, int extra_hole_chance) {
                 int replacement = dungeon->blocks[row_a][col_a].region;
                 int target = dungeon->blocks[row_b][col_b].region;
                 dungeon->blocks[connector.row][connector.col].region = target;
-                dungeon->blocks[connector.row][connector.col].type = HALL;
+                dungeon->blocks[connector.row][connector.col].type = DungeonBlock::HALL;
                 
                 // flood fill the region to the same region, doesnt matter which one
                 _flood_fill(dungeon, connector.row, connector.col, target, replacement);
@@ -97,7 +99,7 @@ void merge_regions(Dungeon *dungeon, int extra_hole_chance) {
             }
 
             if (better_rand(extra_hole_chance) == 0) {
-                dungeon->blocks[connector.row][connector.col].type = HALL;
+                dungeon->blocks[connector.row][connector.col].type = DungeonBlock::HALL;
             }
         }
     }
@@ -114,7 +116,7 @@ static bool _make_connector(Dungeon *dungeon, Connector *connector) {
     int col = connector->col;
     int row = connector->row;
 
-    if (dungeon->blocks[row][col].type != ROCK) {
+    if (dungeon->blocks[row][col].type != DungeonBlock::ROCK) {
         return false;
     }
 
@@ -129,7 +131,7 @@ static bool _make_connector(Dungeon *dungeon, Connector *connector) {
     int region_b = -1;
     for (int i = 0; i < 4; i++) {
         DungeonBlock block = dungeon->blocks[adjacent[i][0]][adjacent[i][1]];
-        if (block.type != ROCK) {
+        if (block.type != DungeonBlock::ROCK) {
             if (region_a == -1) {
                 region_a = block.region;
                 connector->regions[0].row = adjacent[i][0];
@@ -157,9 +159,10 @@ static void _list_shuffle(ConnectorList *list) {
 static ConnectorList _init_list(void) {
     size_t capacity = 10;
     size_t size = 0;
-    Connector *data = malloc(sizeof(Connector) * capacity);
+    Connector *data = (Connector *)malloc(sizeof(Connector) * capacity);
 
-    return (ConnectorList){.capacity = capacity, .size = size, .data = data};
+    ConnectorList list = {data: data, size: size, capacity: capacity};
+    return list;
 }
 
 static void _destroy_list(ConnectorList *list) {
@@ -174,7 +177,7 @@ static void _list_push(ConnectorList *list, Connector n) {
 
     if (list->size >= list->capacity) {
         // reallocate list
-        Connector *new_data = realloc(list->data, sizeof(Connector) * (list->capacity * 2));
+        Connector *new_data = (Connector *)realloc(list->data, sizeof(Connector) * (list->capacity * 2));
         if (!new_data) {
             // error! revert the push
             list->size--;

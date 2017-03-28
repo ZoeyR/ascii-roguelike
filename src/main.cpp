@@ -6,6 +6,7 @@
 #include <string.h>
 #include <limits.h>
 #include <sys/stat.h>
+#include <string>
 
 #include <dungeon/dungeon.h>
 #include <util/distance.h>
@@ -34,12 +35,12 @@ int main(int argc, char *argv[]) {
         dungeon = create_dungeon(options);
     }
 
-    GameState state = init_state(dungeon);
+    GameState state = GameState(dungeon);
     while (1) {
-        Entity *player = unwrap(entity_retrieve(state.dungeon.store, state.dungeon.player_id), 1);
-        print_view(&state, entity_row(player), entity_col(player));
-        tick(&state);
-        if (!entity_alive(unwrap(entity_retrieve(state.dungeon.store, state.dungeon.player_id), 1))) {
+        Entity *player = state.dungeon.store->get(state.dungeon.player_id).unwrap();
+        print_view(&state, player->row, player->col);
+        state.tick();
+        if (!state.dungeon.store->get(state.dungeon.player_id).unwrap()->alive) {
             printf("Player loses :(\n");
             break;
         } 
@@ -54,7 +55,10 @@ int main(int argc, char *argv[]) {
 }
 
 Options parse_args(int argc, char *argv[]) {
-    Options options = {.save = false, .load = false};
+    Options options;
+    options.save = false;
+    options.load = false;
+
     strcpy(options.path, getenv("HOME"));
     strcat(options.path, "/.rlg327/");
     mkdir(options.path, 0777);
@@ -80,7 +84,7 @@ Options parse_args(int argc, char *argv[]) {
                 strcpy(options.path, optarg);
                 break;
             case 'n':
-                options.monsters = expect(parse_int(optarg), "nummon argument must be an integer", 1);
+                options.monsters = parse_int(optarg).expect("nummon argument must be an integer");
                 break;
             case 'f':
                 options.full_size = true;
