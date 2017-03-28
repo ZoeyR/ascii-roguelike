@@ -1,5 +1,5 @@
 CC = g++
-CFLAGS = -Wall -Wextra -lm -lcurses -ggdb -Isrc
+CFLAGS = -Wall -Wextra -lm -lcurses -ggdb -Isrc -std=c++14
 DEPDIR = .d
 DEPFLAGS = -MT $@ -MMD -MF $(DEPDIR)/$*.d
 SOURCEDIR = src
@@ -23,7 +23,7 @@ TEST_TARGET = testout
 all: $(TARGET)
 
 $(TARGET): $(OBJECTS)
-	$(CC) -o $@ $^ $(CFLAGS) -std=c++14
+	$(CC) -o $@ $^ $(CFLAGS)
 
 $(OBJECTDIR)/%.o: $(SOURCEDIR)/%.cpp $(DEPDIR)/%.d
 	@mkdir -p $(@D)
