@@ -1,8 +1,6 @@
 #ifndef DUNGEON_H
 #define DUNGEON_H
 
-#include <stdbool.h>
-#include <stdint.h>
 #include <dungeon/entities.h>
 
 #define ROOM_MAX_WIDTH 27

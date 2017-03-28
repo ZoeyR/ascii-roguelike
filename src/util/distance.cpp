@@ -1,5 +1,4 @@
-#include <limits.h>
-#include <stdio.h>
+#include <climits>
 
 #include <collections/heap.h>
 #include <dungeon/dungeon.h>

@@ -1,5 +1,4 @@
-#include <limits.h>
-#include <stdio.h>
+#include <climits>
 
 #include <loop.h>
 #include <dungeon/entities.h>

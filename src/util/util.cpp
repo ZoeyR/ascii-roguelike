@@ -1,6 +1,6 @@
-#include <stdlib.h>
 #include <string>
-#include <limits.h>
+#include <climits>
+#include <memory>
 
 #include <util/util.h>
 
@@ -9,14 +9,15 @@ Unit unit() {
 }
 
 Result<int, IntParseError> parse_int(char* str) {
-    char* endptr = new char;
-    long int large = strtol(str, &endptr, 10);
+    std::unique_ptr<char> endptr = std::make_unique<char>();
+    char * c = endptr.get();
+    long int large = strtol(str, &c, 10);
 
     if (large > INT_MAX || large < INT_MIN) {
         return Result<int, IntParseError>(TOO_LARGE);
     }
 
-    if (endptr[0] != '\0') {
+    if (*endptr != '\0') {
         return Result<int, IntParseError>(INVALID_STRING);
     }
 

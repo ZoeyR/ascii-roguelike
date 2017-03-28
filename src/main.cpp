@@ -1,10 +1,6 @@
-#include <stdlib.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <time.h>
 #include <getopt.h>
-#include <string.h>
-#include <limits.h>
+#include <cstring>
+#include <climits>
 #include <sys/stat.h>
 #include <string>
 
@@ -13,7 +9,6 @@
 #include <util/util.h>
 #include <loop.h>
 #include <io.h>
-#include <unistd.h>
 
 Options parse_args(int argc, char *argv[]);
 int main(int argc, char *argv[]) {

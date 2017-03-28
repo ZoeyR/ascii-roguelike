@@ -1,10 +1,6 @@
 #include <vector>
 #include <algorithm>
-#include <math.h>
-#include <stdlib.h>
-#include <stdbool.h>
-#include <limits.h>
-#include <stdio.h>
+#include <climits>
 
 #include <dungeon/dungeon.h>
 #include <io.h>

@@ -1,6 +1,3 @@
-#include <stdbool.h>
-#include <stdlib.h>
-
 #include <dungeon/dungeon.h>
 #include <util/util.h>
 // comments for merging dungeon

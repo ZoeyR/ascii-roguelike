@@ -2,12 +2,7 @@
 #include <dungeon/dungeon.h>
 #include <io.h>
 
-#include <signal.h>
-#include <stdio.h>
-#include <stdbool.h>
-#include <stdint.h>
-#include <endian.h>
-#include <limits.h>
+#include <climits>
 #include <ncurses.h>
 
 #define S_HARDNESS_0 "\033[1;7;33;40m%c\033[0m"

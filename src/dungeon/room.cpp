@@ -1,5 +1,4 @@
-#include <stdlib.h>
-#include <math.h>
+#include <cmath>
 
 #include <dungeon/dungeon.h>
 #include <util/util.h>
