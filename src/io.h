@@ -1,6 +1,8 @@
 #ifndef IO_H
 #define IO_H
 
+#include <vector>
+#include <istream>
 #include <dungeon/entities.h>
 #include <util/distance.h>
 #include <dungeon/dungeon.h>
@@ -20,4 +22,5 @@ void save_dungeon(Dungeon *dungeon, char *path);
 
 Dungeon load_dungeon(char *path);
 
+std::vector<MonsterDescription> load_desciptions(std::istream& is);
 #endif

@@ -3,6 +3,7 @@
 #include <memory>
 #include <dungeon/entities.h>
 #include <util/util.h>
+#include <cstdio>
 
 Entity::Entity(int row, int col) {
     this->row = row;
@@ -68,6 +69,61 @@ Result<Entity *, Unit> EntityStore::get(EIdx index) {
 
     return list[index - 1].get();
 }
+
+MonsterDescription::MonsterDescription() {
+    smart = false;
+    telepathic = false;
+    tunneling = false;
+    erratic = false;
+    pass = false;
+    pickup = false;
+    destroy = false;
+}
+
+void MonsterDescription::print() {
+    using namespace std;
+    cout << name << endl;
+    cout << description;
+    cout << symbol << endl;
+    cout << color << endl;
+    speed.print();
+    if (smart) {
+        cout << "SMART ";
+    }
+    if (telepathic) {
+        cout << "TELE ";
+    }
+    if (tunneling) {
+        cout << "TUNNEL ";
+    }
+    if (erratic) {
+        cout << "ERRATIC ";
+    }
+    if (pass) {
+        cout << "PASS ";
+    }
+    if (pickup) {
+        cout << "PICKUP ";
+    }
+    if (destroy) {
+        cout << "DESTROY ";
+    }
+    cout << endl;
+    hp.print();
+    damage.print();
+}
+
+bool Dice::parse_str(std::string& str) {
+    auto ret = sscanf(str.c_str(), "%d+%dd%d", &base, &num, &sides);
+    return ret == 3;
+}
+
+void Dice::print() {
+    using namespace std;
+    cout << base << "+" << num << "d" << sides << endl;
+}
+
+Dice::Dice() {}
 
 bool is_player(Entity *entity) {
   return dynamic_cast<Player *>(entity);

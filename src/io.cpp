@@ -1,9 +1,10 @@
 #include <util/util.h>
 #include <dungeon/dungeon.h>
 #include <io.h>
-
+#include <sstream>
 #include <climits>
 #include <ncurses.h>
+#include <iostream>
 
 #define S_HARDNESS_0 "\033[1;7;33;40m%c\033[0m"
 #define S_HARDNESS_1 "\033[1;7;37;40m%c\033[0m"
@@ -170,6 +171,124 @@ void print_dungeon(Dungeon *dungeon, int center_row, int center_col) {
     }
     box(game_screen, 0, 0);
     wrefresh(main_screen);
+}
+
+static bool _load_monster(std::istream& is, MonsterDescription& desc) {
+    std::string read;
+    int parameters_read = 0;
+
+    std::getline(is, read);
+    std::cout << "read: " << read << std::endl;
+    if (read.compare("BEGIN MONSTER") != 0) {
+        return false;
+    }
+
+    std::getline(is, read);
+    while (read.compare("END") != 0) {
+        std::cout << "read: " << read << read.compare("DESC") << std::endl;
+        if (read.compare(0, 4, "NAME") == 0) {
+            std::cout << "setting name" << std::endl;
+            desc.name = read.substr(read.find_first_not_of(' ', 4), std::string::npos);
+            parameters_read++;
+        } else if (read.compare(0, 4, "SYMB") == 0) {
+            desc.symbol = read[5];
+            parameters_read++;
+        } else if (read.compare(0, 4, "DESC") == 0) {
+            std::cout << "description line: " << std::endl;
+            std::getline(is, read);
+            while(read.compare(".") != 0) {
+                if (read.length() > 77) {
+                    return false;
+                }
+                desc.description += read;
+                desc.description += "\n";
+                std::getline(is, read);
+            }
+            parameters_read++;
+        } else if (read.compare(0, 5, "COLOR") == 0) {
+            desc.color = read.substr(read.find_first_not_of(' ', 5), std::string::npos);
+            parameters_read++;
+        } else if (read.compare(0, 5, "SPEED") == 0) {
+            auto dice_str = read.substr(read.find_first_not_of(' ', 5), std::string::npos);
+            if (!desc.speed.parse_str(dice_str)) {
+                return false;
+            }
+            parameters_read++;
+        } else if (read.compare(0, 4, "ABIL") == 0) {
+            std::stringstream ss;
+            ss.str(read.substr(read.find_first_not_of(' ', 4), std::string::npos));
+
+            std::string ability;
+            while(std::getline(ss, ability, ' ')) {
+                std::cout << "ability: " << ability << std::endl;
+                if (ability.compare("SMART") == 0) {
+                    desc.smart = true;
+                } else if (ability.compare("TELE") == 0) {
+                    desc.telepathic = true;
+                } else if (ability.compare("TUNNEL") == 0) {
+                    desc.tunneling = true;
+                } else if (ability.compare("ERRATIC") == 0) {
+                    desc.erratic = true;
+                } else if (ability.compare("PASS") == 0) {
+                    desc.pass = true;
+                } else if (ability.compare("PICKUP") == 0) {
+                    desc.pickup = true;
+                } else if (ability.compare("DESTROY") == 0) {
+                    desc.destroy = true;
+                } else {
+                    return false;
+                }
+            }
+            parameters_read++;
+        } else if (read.compare(0, 2, "HP") == 0) {
+            auto dice_str = read.substr(read.find_first_not_of(' ', 2), std::string::npos);
+            if (!desc.hp.parse_str(dice_str)) {
+                return false;
+            }
+            parameters_read++;
+        } else if (read.compare(0, 3, "DAM") == 0) {
+            auto dice_str = read.substr(read.find_first_not_of(' ', 3), std::string::npos);
+            if (!desc.damage.parse_str(dice_str)) {
+                return false;
+            }
+            parameters_read++;
+        } else {
+            return false;
+        }
+        std::getline(is, read);
+    }
+    std::cout << "done with while, read:" << read << std::endl;
+
+    if (parameters_read != 8) {
+        return false;
+    }
+
+    return true;
+}
+
+std::vector<MonsterDescription> load_desciptions(std::istream& is) {
+    std::vector<MonsterDescription> descs;
+    std::string desc_header;
+
+    std::getline(is, desc_header);
+    if (desc_header.compare("RLG327 MONSTER DESCRIPTION 1") != 0) {
+        return descs;
+    }
+
+    while (!is.eof()) {
+        std::cout << "reading monster" << std::endl;
+        std::getline(is, desc_header);
+        MonsterDescription desc;
+        auto succ = _load_monster(is, desc);
+        std::cout << "read monster" << std::endl;
+        if (!succ) {
+            continue;
+        }
+
+        descs.push_back(desc);
+    }
+    
+    return descs;
 }
 
 void print_distance_map(Distances* distances) {

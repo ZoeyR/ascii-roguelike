@@ -44,6 +44,36 @@ class EntityStore {
         Result<Entity *, Unit> get(EIdx index);
 };
 
+class Dice {
+    public:
+        int base;
+        int num;
+        int sides;
+        Dice();
+        bool parse_str(std::string& str);
+        void print();
+};
+
+class MonsterDescription {
+    public:
+        std::string name;
+        std::string description;
+        char symbol;
+        std::string color;
+        Dice speed;
+        bool smart :1;
+        bool telepathic :1;
+        bool tunneling :1;
+        bool erratic :1;
+        bool pass :1;
+        bool pickup :1;
+        bool destroy :1;
+        Dice hp;
+        Dice damage;
+        MonsterDescription();
+        void print();
+};
+
 bool is_player(Entity *entity);
 
 #endif

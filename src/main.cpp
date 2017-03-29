@@ -3,6 +3,8 @@
 #include <climits>
 #include <sys/stat.h>
 #include <string>
+#include <iostream>
+#include <fstream>
 
 #include <dungeon/dungeon.h>
 #include <util/distance.h>
@@ -11,7 +13,8 @@
 #include <io.h>
 
 Options parse_args(int argc, char *argv[]);
-int main(int argc, char *argv[]) {
+int main() {
+    /*
     srand(time(NULL));
     
     Options options = parse_args(argc, argv);
@@ -45,7 +48,18 @@ int main(int argc, char *argv[]) {
         save_dungeon(&state.dungeon, options.path);
     }
     destroy_state(&state);
-
+    */
+    std::string path = getenv("HOME");
+    path += "/.rlg327/";
+    mkdir(path.c_str(), 0777);
+    path += "monster_desc.txt";
+    std::ifstream file_stream(path, std::ifstream::in); 
+    auto descriptions = load_desciptions(file_stream);
+    std::cout << descriptions.size() << " Monsters read" << std::endl;
+    for(size_t i = 0; i < descriptions.size(); i++) {
+        descriptions[i].print();
+        std::cout << std::endl;
+    }
     return 0;
 }
 
