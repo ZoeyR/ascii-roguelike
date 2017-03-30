@@ -1,14 +1,9 @@
-The player has a 9x9 fog of war surrounding them, extending four blocks in
-every direction. Monsters are only displayed when they are in the fog of war,
-the player does not remember monster positions. A new keybinding has been
-added, 'D'. when this key is pressed in look mode a debug view is toggled that
-shows the entire map without a fog of war. The primary purpose of this is to
-validate that the player view and dungeon match up.
+For the purposes of this assignment dungeon simulation has been disabled. That
+way the monster descriptions can be printed after parsing. Some new classes
+were created for the purposes of this assignment, namely, the MonsterDecription
+class and the Dice class.
 
-The implementation differs slightly from the assignment specification. Since my
-code is not based on the professors I only had one entity file. As such, I only
-have one .cpp file in the assignment. Additionally, my code was structured such
-that it didn't make sense for the player to hold onto its own view, since
-entities were originally designed to be eventually use composition instead of
-inheritance, and nesting the view with the player would complicate things
-later.
+During parsing if an error is encounted the parsing of that monster is skipped.
+If the parser returns a vector of length zero it indicates that the entire
+document was malformed. Parsing assumes that the monster file exists in 
+$HOME/.rlg327/ and that the file is names monster_desc.txt

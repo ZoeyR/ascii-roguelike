@@ -93,3 +93,12 @@
 ---------
 * create fog-of-war
 * correct fog distance
+
+2017-3-27
+---------
+* convert project to c++
+
+2017-3-28
+---------
+* Implement description parsing
+* Disable dungeon simulation for now
