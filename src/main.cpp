@@ -6,6 +6,7 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <memory>
 
 #include <dungeon/dungeon.h>
 #include <util/distance.h>
@@ -51,22 +52,22 @@ int main(int argc, char *argv[]) {
         dungeon = create_dungeon(&options);
     }
 
-    GameState state = GameState(dungeon);
+    GameState* state = new GameState(dungeon);
     while (1) {
-        Entity *player = state.dungeon.store->get(state.dungeon.player_id).unwrap();
-        print_view(&state, player->row, player->col);
-        state.tick();
-        if (!state.dungeon.store->get(state.dungeon.player_id).unwrap()->alive) {
+        Entity *player = state->dungeon.store->get(state->dungeon.player_id).unwrap();
+        print_view(state, player->row, player->col);
+        state->tick();
+        if (!state->dungeon.store->get(state->dungeon.player_id).unwrap()->alive) {
             printf("Player loses :(\n");
             break;
         } 
     }
 
     if (options.save) {
-        save_dungeon(&state.dungeon, options.path);
+        save_dungeon(&state->dungeon, options.path);
     }
-    destroy_state(&state);
-    
+    destroy_state(state);
+    delete state; 
     return 0;
 }
 
