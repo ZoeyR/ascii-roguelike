@@ -37,17 +37,6 @@ class Monster: public Entity {
         Monster(int row, int col);
 };
 
-class EntityStore {
-    std::vector<std::unique_ptr<Entity>> list;
-    public:
-        template <typename E>
-        EIdx add_entity(E entity);
-        EIdx spawn_player(int row, int col);
-        EIdx spawn_monster(int row, int col);
-        size_t size();
-        Result<Entity *, Unit> get(EIdx index);
-};
-
 class MonsterDescription {
     public:
         std::string name;
@@ -67,6 +56,17 @@ class MonsterDescription {
         MonsterDescription();
         Monster generate(int row, int col);
         void print();
+};
+
+class EntityStore {
+    std::vector<std::unique_ptr<Entity>> list;
+    public:
+        template <typename E>
+        EIdx add_entity(E entity);
+        EIdx spawn_player(int row, int col);
+        EIdx spawn_monster(MonsterDescription& desc, int row, int col);
+        size_t size();
+        Result<Entity *, Unit> get(EIdx index);
 };
 
 bool is_player(Entity *entity);

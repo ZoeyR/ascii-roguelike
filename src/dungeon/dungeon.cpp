@@ -15,6 +15,7 @@ static void _unfreeze_rooms(Dungeon *dungeon);
 
 void rebuild_dungeon(Dungeon *dungeon) {
     delete dungeon->store;
+    delete dungeon->o_store;
     *dungeon = create_dungeon(dungeon->params);
 }
 
@@ -93,8 +94,8 @@ Dungeon create_dungeon(Options* params) {
             dungeon.blocks[row][col].type != DungeonBlock::PILLAR &&
             dungeon.blocks[row][col].entity_id == 0) {
             
-            auto monster = params->monster_pool[better_rand(params->monster_pool.size() - 1)].generate(row, col);
-            EIdx id = dungeon.store->add_entity(monster);
+            MonsterDescription& desc = params->monster_pool[better_rand(params->monster_pool.size() - 1)];
+            EIdx id = dungeon.store->spawn_monster(desc, row, col);
             dungeon.blocks[row][col].entity_id = id;
             monsters_to_place--;
         }

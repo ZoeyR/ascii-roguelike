@@ -53,8 +53,19 @@ EIdx EntityStore::spawn_player(int row, int col) {
     return j;
 }
 
-EIdx EntityStore::spawn_monster(int row, int col) {
+EIdx EntityStore::spawn_monster(MonsterDescription& desc, int row, int col) {
     Monster monster(row, col);
+    monster.name = desc.name;
+    monster.print = desc.symbol;
+    monster.color = desc.color;
+    monster.speed = desc.speed.roll();
+    monster.smart = desc.smart;
+    monster.telepathic = desc.telepathic;
+    monster.tunneling = desc.tunneling;
+    monster.erratic = desc.erratic;
+    monster.hp = desc.hp.roll();
+    monster.damage = desc.damage;
+    
     return add_entity(monster);
 }
 
