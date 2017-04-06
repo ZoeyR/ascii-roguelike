@@ -42,3 +42,24 @@ unsigned long
   // Truncated division is intentional
   return x/bin_size;
 }
+
+bool Dice::parse_str(std::string& str) {
+    auto ret = sscanf(str.c_str(), "%d+%dd%d", &base, &num, &sides);
+    return ret == 3;
+}
+
+void Dice::print() {
+    using namespace std;
+    cout << base << "+" << num << "d" << sides << endl;
+}
+
+int Dice::roll() {
+    int res = base;
+    for (int i = 0; i < num; i++) {
+        res += better_rand(sides - 1) + 1;
+    }
+
+    return res;
+}
+
+Dice::Dice() {}

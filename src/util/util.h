@@ -61,4 +61,15 @@ Result<int, IntParseError> parse_int(char* str);
 
 int better_rand(int limit);
 
+class Dice {
+    public:
+        int base;
+        int num;
+        int sides;
+        Dice();
+        int roll();
+        bool parse_str(std::string& str);
+        void print();
+};
+
 #endif

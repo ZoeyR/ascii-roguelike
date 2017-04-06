@@ -25,6 +25,10 @@ class Player: public Entity {
 
 class Monster: public Entity {
     public:
+        std::string name;
+        std::string color;
+        int hp;
+        Dice damage;
         bool smart :1;
         bool telepathic :1;
         bool tunneling :1;
@@ -34,24 +38,14 @@ class Monster: public Entity {
 };
 
 class EntityStore {
-    template <typename E>
-    EIdx add_entity(E entity);
     std::vector<std::unique_ptr<Entity>> list;
     public:
+        template <typename E>
+        EIdx add_entity(E entity);
         EIdx spawn_player(int row, int col);
         EIdx spawn_monster(int row, int col);
         size_t size();
         Result<Entity *, Unit> get(EIdx index);
-};
-
-class Dice {
-    public:
-        int base;
-        int num;
-        int sides;
-        Dice();
-        bool parse_str(std::string& str);
-        void print();
 };
 
 class MonsterDescription {
@@ -71,6 +65,7 @@ class MonsterDescription {
         Dice hp;
         Dice damage;
         MonsterDescription();
+        Monster generate(int row, int col);
         void print();
 };
 

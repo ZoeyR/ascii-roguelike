@@ -13,11 +13,27 @@
 #include <io.h>
 
 Options parse_args(int argc, char *argv[]);
-int main() {
-    /*
+int main(int argc, char *argv[]) {
     srand(time(NULL));
     
+    std::string monster_path = getenv("HOME");
+    monster_path += "/.rlg327/";
+    mkdir(monster_path.c_str(), 0777);
+    monster_path += "monster_desc.txt";
+    std::ifstream monster_file_stream(monster_path, std::ifstream::in); 
+    auto monster_descriptions = load_desciptions(monster_file_stream);
+
+    std::string object_path = getenv("HOME");
+    object_path += "/.rlg327/";
+    mkdir(object_path.c_str(), 0777);
+    object_path += "object_desc.txt";
+    std::ifstream object_file_stream(object_path, std::ifstream::in); 
+    auto object_descriptions = load_object_descriptions(object_file_stream);
+
+    std::cout << object_descriptions.size();
     Options options = parse_args(argc, argv);
+    options.monster_pool = monster_descriptions;
+    options.object_pool = object_descriptions;
     options.room_tries = 1000;
     options.min_rooms = 10;
     options.hardness = 50;
@@ -48,18 +64,7 @@ int main() {
         save_dungeon(&state.dungeon, options.path);
     }
     destroy_state(&state);
-    */
-    std::string path = getenv("HOME");
-    path += "/.rlg327/";
-    mkdir(path.c_str(), 0777);
-    path += "monster_desc.txt";
-    std::ifstream file_stream(path, std::ifstream::in); 
-    auto descriptions = load_desciptions(file_stream);
-    std::cout << descriptions.size() << " Monsters read" << std::endl;
-    for(size_t i = 0; i < descriptions.size(); i++) {
-        descriptions[i].print();
-        std::cout << std::endl;
-    }
+    
     return 0;
 }
 

@@ -20,12 +20,14 @@ void rebuild_dungeon(Dungeon *dungeon) {
 
 void destroy_dungeon(Dungeon *dungeon) {
     delete dungeon->store;
+    delete dungeon->o_store;
 }
 
 Dungeon create_dungeon(Options params) {
     Dungeon dungeon;
     dungeon.regions = 0;
     dungeon.store = new EntityStore();
+    dungeon.o_store = new ObjectStore();
     dungeon.monster_count = params.monsters;
     dungeon.params = params;
     // fill dungeon with random noise
@@ -42,7 +44,7 @@ Dungeon create_dungeon(Options params) {
                 immutable = false;
             }
 
-            DungeonBlock block = {.type = DungeonBlock::ROCK, .hardness = hardness, .region = 0, .immutable = immutable, .entity_id = 0};
+            DungeonBlock block = {.type = DungeonBlock::ROCK, .hardness = hardness, .region = 0, .immutable = immutable, .entity_id = 0, .object_id = 0};
             dungeon.blocks[row][col] = block;
         }
     }
@@ -83,7 +85,7 @@ Dungeon create_dungeon(Options params) {
     }
 
     int monsters_to_place = params.monsters;
-    while(monsters_to_place > 0) {
+    while(monsters_to_place > 0 && params.monster_pool.size() > 0) {
         int row = better_rand(DUNGEON_HEIGHT - 1);
         int col = better_rand(DUNGEON_WIDTH - 1);
 
@@ -91,9 +93,26 @@ Dungeon create_dungeon(Options params) {
             dungeon.blocks[row][col].type != DungeonBlock::PILLAR &&
             dungeon.blocks[row][col].entity_id == 0) {
             
-            EIdx id = dungeon.store->spawn_monster(row, col);
+            auto monster = params.monster_pool[better_rand(params.monster_pool.size() - 1)].generate(row, col);
+            EIdx id = dungeon.store->add_entity(monster);
             dungeon.blocks[row][col].entity_id = id;
             monsters_to_place--;
+        }
+    }
+
+    int objects_to_place = 20;
+    while(objects_to_place > 0 && params.object_pool.size() > 0) {
+        int row = better_rand(DUNGEON_HEIGHT - 1);
+        int col = better_rand(DUNGEON_WIDTH - 1);
+
+        if (dungeon.blocks[row][col].type != DungeonBlock::ROCK &&
+            dungeon.blocks[row][col].type != DungeonBlock::PILLAR &&
+            dungeon.blocks[row][col].object_id == 0) {
+            
+            auto object = params.object_pool[better_rand(params.object_pool.size() - 1)].generate();
+            OIdx id = dungeon.o_store->add_object(object);
+            dungeon.blocks[row][col].object_id = id;
+            objects_to_place--;
         }
     }
 

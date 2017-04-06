@@ -31,10 +31,11 @@
 
 static void print_block(DungeonBlock block, bool visible, int row, int col);
 static void print_entity(Entity *entity, int row, int col);
+static void print_object(Object *entity, int row, int col);
 static void print_hardness(char c, DungeonBlock block, int row, int col);
 static void print_s_hardness(char c, DungeonBlock block, int row, int col);
 static void print_distance(int distance);
-
+static int _string_to_color(std::string& color_str);
 typedef union {
     uint32_t num;
     uint8_t bytes[4];
@@ -69,6 +70,16 @@ void init_screen(bool full_size) {
     init_pair(4, COLOR_RED, COLOR_BLACK);
     init_pair(5, COLOR_GREEN, COLOR_BLACK);
     init_pair(6, COLOR_BLACK, COLOR_BLUE);
+
+    // OBJECT AND MONSTER COLOR DEFS
+    init_pair(10, COLOR_RED, COLOR_BLACK);
+    init_pair(11, COLOR_GREEN, COLOR_BLACK);
+    init_pair(12, COLOR_BLUE, COLOR_BLACK);
+    init_pair(13, COLOR_CYAN, COLOR_BLACK);
+    init_pair(14, COLOR_YELLOW, COLOR_BLACK);
+    init_pair(15, COLOR_MAGENTA, COLOR_BLACK);
+    init_pair(16, COLOR_WHITE, COLOR_BLACK);
+    init_pair(17, COLOR_BLACK, COLOR_WHITE);
 
     if (full_size) {
         SCREEN_ROWS = LINES;
@@ -124,6 +135,8 @@ void print_view(GameState *state, int center_row, int center_col) {
 
             if (state->view.blocks[row][col].entity_id != 0) {
                 print_entity(state->dungeon.store->get(state->view.blocks[row][col].entity_id).unwrap(), row - start_row, col - start_col);
+            } else if (state->view.blocks[row][col].object_id != 0) {
+                print_object(state->dungeon.o_store->get(state->view.blocks[row][col].object_id).unwrap(), row - start_row, col - start_col);;
             } else {
                 print_block(state->view.blocks[row][col], visible, row - start_row, col - start_col);
             }
@@ -164,6 +177,8 @@ void print_dungeon(Dungeon *dungeon, int center_row, int center_col) {
 
             if (dungeon->blocks[row][col].entity_id != 0) {
                 print_entity(dungeon->store->get(dungeon->blocks[row][col].entity_id).unwrap(), row - start_row, col - start_col);
+            } else if (dungeon->blocks[row][col].object_id != 0) {
+                print_object(dungeon->o_store->get(dungeon->blocks[row][col].object_id).unwrap(), row - start_row, col - start_col);;
             } else {
                 print_block(dungeon->blocks[row][col], visible, row - start_row, col - start_col);
             }
@@ -288,6 +303,130 @@ std::vector<MonsterDescription> load_desciptions(std::istream& is) {
         descs.push_back(desc);
     }
     
+    return descs;
+}
+
+static bool _load_object(std::istream& is, ObjectDescription& desc) {
+    std::string read;
+    int parameters_read = 0;
+
+    std::getline(is, read);
+    std::cout << "read: " << read << std::endl;
+    if (read.compare("BEGIN OBJECT") != 0) {
+        return false;
+    }
+
+    std::getline(is, read);
+    while (read.compare("END") != 0) {
+        if (read.compare(0, 4, "NAME") == 0) {
+            desc.name = read.substr(read.find_first_not_of(' ', 4), std::string::npos);
+            parameters_read++;
+        } else if (read.compare(0, 4, "DESC") == 0) {
+            std::getline(is, read);
+            while(read.compare(".") != 0) {
+                if (read.length() > 77) {
+                    return false;
+                }
+                desc.description += read;
+                desc.description += "\n";
+                std::getline(is, read);
+            }
+            parameters_read++;
+        } else if (read.compare(0, 4, "TYPE") == 0) {
+            auto type_string = read.substr(read.find_first_not_of(' ', 4), std::string::npos);
+            Result<ObjectType, Unit> res = object_type_from_string(type_string);
+            if (res.is_err()) {
+                return false;
+            }
+            desc.type = res.unwrap();
+            parameters_read++;
+        } else if (read.compare(0, 5, "COLOR") == 0) {
+            desc.color = read.substr(read.find_first_not_of(' ', 5), std::string::npos);
+            parameters_read++;
+        } else if (read.compare(0, 3, "HIT") == 0) {
+            auto dice_str = read.substr(read.find_first_not_of(' ', 3), std::string::npos);
+            if (!desc.hit_bonus.parse_str(dice_str)) {
+                return false;
+            }
+            parameters_read++;
+        } else if (read.compare(0, 3, "DAM") == 0) {
+            auto dice_str = read.substr(read.find_first_not_of(' ', 3), std::string::npos);
+            if (!desc.damage_bonus.parse_str(dice_str)) {
+                return false;
+            }
+            parameters_read++;
+        } else if (read.compare(0, 5, "DODGE") == 0) {
+            auto dice_str = read.substr(read.find_first_not_of(' ', 5), std::string::npos);
+            if (!desc.dodge_bonus.parse_str(dice_str)) {
+                return false;
+            }
+            parameters_read++;
+        } else if (read.compare(0, 3, "DEF") == 0) {
+            auto dice_str = read.substr(read.find_first_not_of(' ', 3), std::string::npos);
+            if (!desc.defense_bonus.parse_str(dice_str)) {
+                return false;
+            }
+            parameters_read++;
+        } else if (read.compare(0, 6, "WEIGHT") == 0) {
+            auto dice_str = read.substr(read.find_first_not_of(' ', 6), std::string::npos);
+            if (!desc.weight.parse_str(dice_str)) {
+                return false;
+            }
+            parameters_read++;
+        } else if (read.compare(0, 5, "SPEED") == 0) {
+            auto dice_str = read.substr(read.find_first_not_of(' ', 5), std::string::npos);
+            if (!desc.speed_bonus.parse_str(dice_str)) {
+                return false;
+            }
+            parameters_read++;
+        } else if (read.compare(0, 4, "ATTR") == 0) {
+            auto dice_str = read.substr(read.find_first_not_of(' ', 4), std::string::npos);
+            if (!desc.special.parse_str(dice_str)) {
+                return false;
+            }
+            parameters_read++;
+        } else if (read.compare(0, 3, "VAL") == 0) {
+            auto dice_str = read.substr(read.find_first_not_of(' ', 3), std::string::npos);
+            if (!desc.value.parse_str(dice_str)) {
+                return false;
+            }
+            parameters_read++;
+        } else {
+            return false;
+        }
+        std::getline(is, read);
+    }
+    std::cout << "done with while, read:" << parameters_read << std::endl;
+
+    if (parameters_read != 12) {
+        return false;
+    }
+
+    return true;
+}
+
+std::vector<ObjectDescription> load_object_descriptions(std::istream& is) {
+    std::vector<ObjectDescription> descs;
+    std::string desc_header;
+
+    std::getline(is, desc_header);
+    if (desc_header.compare("RLG327 OBJECT DESCRIPTION 1") != 0) {
+        return descs;
+    }
+
+    while (!is.eof()) {
+        std::cout << "reading object" << std::endl;
+        //std::getline(is, desc_header);
+        ObjectDescription desc;
+        auto succ = _load_object(is, desc);
+        std::cout << "read object" << std::endl;
+        if (!succ) {
+            continue;
+        }
+
+        descs.push_back(desc);
+    }
+    std::cout << "read " << descs.size() << " objects" << std::endl;
     return descs;
 }
 
@@ -488,9 +627,16 @@ static void print_entity(Entity *entity, int row, int col) {
     if (is_player(entity)) {
         wattron(game_screen, COLOR_PAIR(5));
     } else {
-        wattron(game_screen, COLOR_PAIR(4));
+        int color = _string_to_color(((Monster *)entity)->color);
+        wattron(game_screen, COLOR_PAIR(color));
     }
     mvwprintw(game_screen, row, col, "%c", entity->print);
+}
+
+static void print_object(Object *object, int row, int col) {
+    int color = _string_to_color(object->color);
+    wattron(game_screen, COLOR_PAIR(color));
+    mvwprintw(game_screen, row, col, "%c", object->print);
 }
 
 static void print_s_hardness(char c, DungeonBlock block, int row, int col) {
@@ -600,4 +746,26 @@ static void print_distance(int distance) {
     } else {
         putchar('X');
     }
-}               
+}     
+
+static int _string_to_color(std::string& color_str) {
+    if (color_str.compare("RED") == 0) {
+        return 10;
+    } else if (color_str.compare("GREEN") == 0) {
+        return 11;
+    } else if (color_str.compare("BLUE") == 0) {
+        return 12;
+    } else if (color_str.compare("CYAN") == 0) {
+        return 13;
+    } else if (color_str.compare("YELLOW") == 0) {
+        return 14;
+    } else if (color_str.compare("MAGENTA") == 0) {
+        return 15;
+    } else if (color_str.compare("WHITE") == 0) {
+        return 16;
+    } else if (color_str.compare("BLACK") == 0) {
+        return 17;
+    } else {
+        return 3;
+    }
+}          

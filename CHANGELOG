@@ -102,3 +102,14 @@
 ---------
 * Implement description parsing
 * Disable dungeon simulation for now
+
+2017-4-4
+--------
+* Implement object loading
+
+2017-4-5
+--------
+* Generate monsters from descs
+* Generate object from descs
+* Place monsters and objects in dungeon
+* Print updated colors and characters

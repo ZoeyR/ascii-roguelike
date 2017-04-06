@@ -21,7 +21,7 @@ static void _init_floor_state(Dungeon &dungeon, Heap<Event> &heap, View &view) {
     // TODO build the first view
     for(int row = 0; row < DUNGEON_HEIGHT; row++) {
         for(int col = 0; col < DUNGEON_WIDTH; col++) {
-            view.blocks[row][col] = (DungeonBlock){.type = DungeonBlock::ROCK, .hardness = 200, .region = 0, .immutable = false, .entity_id = 0};
+            view.blocks[row][col] = (DungeonBlock){.type = DungeonBlock::ROCK, .hardness = 200, .region = 0, .immutable = false, .entity_id = 0, .object_id = 0};
         }
     }
 }
@@ -64,7 +64,7 @@ bool GameState::tick() {
     } else {
         for(int row = 0; row < DUNGEON_HEIGHT; row++) {
             for(int col = 0; col < DUNGEON_WIDTH; col++) {
-                view.blocks[row][col] = (DungeonBlock){.type = DungeonBlock::ROCK, .hardness = 200, .region = 0, .immutable = false, .entity_id = 0};
+                view.blocks[row][col] = (DungeonBlock){.type = DungeonBlock::ROCK, .hardness = 200, .region = 0, .immutable = false, .entity_id = 0, .object_id = 0};
             }
         }
     }

@@ -1,7 +1,10 @@
 #ifndef DUNGEON_H
 #define DUNGEON_H
 
+#include <vector>
+
 #include <dungeon/entities.h>
+#include <dungeon/object.h>
 
 #define ROOM_MAX_WIDTH 27
 #define ROOM_MAX_HEIGHT 27
@@ -15,6 +18,8 @@
 #define HARDNESS_TIER_MAX 255
 
 typedef struct {
+    std::vector<MonsterDescription> monster_pool;
+    std::vector<ObjectDescription> object_pool;
     int save;
     int load;
     char path[256];
@@ -42,6 +47,7 @@ typedef struct {
     int region;
     bool immutable;
     EIdx entity_id;
+    OIdx object_id;
 } DungeonBlock;
 
 typedef struct {
@@ -58,6 +64,7 @@ typedef struct {
     int monster_count;
     EIdx player_id;
     EntityStore *store;
+    ObjectStore *o_store;
     DungeonBlock blocks[105][160];
 } Dungeon;
 

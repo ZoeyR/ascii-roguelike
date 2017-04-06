@@ -40,7 +40,7 @@ static DungeonRoom create_rectangle(int width, int height) {
     // first fill the room with DungeonBlock::ROCK
     for(int row = 0; row < ROOM_MAX_HEIGHT; row++) {
         for(int col = 0; col < ROOM_MAX_WIDTH; col++) {
-            DungeonBlock block = {.type = DungeonBlock::ROCK, .hardness = 0, .region = 0, .immutable = false, .entity_id = 0};
+            DungeonBlock block = {.type = DungeonBlock::ROCK, .hardness = 0, .region = 0, .immutable = false, .entity_id = 0, .object_id = 0};
             room.blocks[row][col] = block;
         }
     }
@@ -76,7 +76,7 @@ static DungeonRoom create_ellipse(int width, int height) {
     // first fill the room with DungeonBlock::ROCK
     for(int row = 0; row < ROOM_MAX_HEIGHT; row++) {
         for(int col = 0; col < ROOM_MAX_WIDTH; col++) {
-            DungeonBlock block = {.type = DungeonBlock::ROCK, .hardness = 0, .region = 0, .immutable = false, .entity_id = 0};
+            DungeonBlock block = {.type = DungeonBlock::ROCK, .hardness = 0, .region = 0, .immutable = false, .entity_id = 0, .object_id = 0};
             room.blocks[row][col] = block;
         }
     }

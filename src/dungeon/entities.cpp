@@ -113,17 +113,21 @@ void MonsterDescription::print() {
     damage.print();
 }
 
-bool Dice::parse_str(std::string& str) {
-    auto ret = sscanf(str.c_str(), "%d+%dd%d", &base, &num, &sides);
-    return ret == 3;
+Monster MonsterDescription::generate(int row, int col) {
+    Monster monster(row, col);
+    monster.name = name;
+    monster.print = symbol;
+    monster.color = color;
+    monster.speed = speed.roll();
+    monster.smart = smart;
+    monster.telepathic = telepathic;
+    monster.tunneling = tunneling;
+    monster.erratic = erratic;
+    monster.hp = hp.roll();
+    monster.damage = damage;
+    
+    return monster;
 }
-
-void Dice::print() {
-    using namespace std;
-    cout << base << "+" << num << "d" << sides << endl;
-}
-
-Dice::Dice() {}
 
 bool is_player(Entity *entity) {
   return dynamic_cast<Player *>(entity);

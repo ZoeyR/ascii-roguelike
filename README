@@ -1,9 +1,10 @@
-For the purposes of this assignment dungeon simulation has been disabled. That
-way the monster descriptions can be printed after parsing. Some new classes
-were created for the purposes of this assignment, namely, the MonsterDecription
-class and the Dice class.
+Monster descriptions and object descriptions are parsed from $HOME/.rlg327/monster_desc.txt
+and $HOME/.rlg327/object_desc.txt respectively. These parsed descriptions are used to fill
+the dungeon with monsters and objects based on them.
 
-During parsing if an error is encounted the parsing of that monster is skipped.
-If the parser returns a vector of length zero it indicates that the entire
-document was malformed. Parsing assumes that the monster file exists in 
-$HOME/.rlg327/ and that the file is names monster_desc.txt
+Objects and monsters have every dice value apart from damage pre-rolled before generation.
+
+None of the new monster abilities have been implemented.
+
+Currently there is no way to pick up or use objects since it was not part of the assignment
+requirements.

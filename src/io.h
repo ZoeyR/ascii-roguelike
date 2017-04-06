@@ -23,4 +23,6 @@ void save_dungeon(Dungeon *dungeon, char *path);
 Dungeon load_dungeon(char *path);
 
 std::vector<MonsterDescription> load_desciptions(std::istream& is);
+
+std::vector<ObjectDescription> load_object_descriptions(std::istream& is);
 #endif
