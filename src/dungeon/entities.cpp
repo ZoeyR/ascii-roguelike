@@ -65,8 +65,9 @@ EIdx EntityStore::spawn_monster(MonsterDescription& desc, int row, int col) {
     monster.erratic = desc.erratic;
     monster.hp = desc.hp.roll();
     monster.damage = desc.damage;
-    
-    return add_entity(monster);
+    monster.index = list.size() + 1;
+    list.push_back(std::make_unique<Monster>(monster));
+    return monster.index;
 }
 
 size_t EntityStore::size() {
