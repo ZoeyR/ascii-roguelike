@@ -146,7 +146,7 @@ void print_view(GameState *state, int center_row, int center_col) {
     wrefresh(main_screen);
 }
 
-void print_dungeon(Dungeon *dungeon, int center_row, int center_col) {
+void print_dungeon(const Dungeon *dungeon, int center_row, int center_col) {
     wbkgd(main_screen, COLOR_PAIR(6));
     int start_row = center_row - (GAME_SCREEN_ROWS / 2);
     int end_row = start_row + GAME_SCREEN_ROWS;

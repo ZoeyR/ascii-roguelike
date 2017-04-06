@@ -1,5 +1,5 @@
 #include <climits>
-
+#include <unistd.h>
 #include <loop.h>
 #include <dungeon/entities.h>
 #include <dungeon/dungeon.h>
@@ -10,8 +10,8 @@
 #include <ncurses.h>
 
 static void _init_floor_state(Dungeon &dungeon, Heap<Event> &heap, View &view);
-static int _length_no_tunnel(void *context, Coordinate *from, Coordinate *to);
-static int _length_tunnel(void *context, Coordinate *from, Coordinate *to);
+static int _length_no_tunnel(const Dungeon& context, Coordinate *from, Coordinate *to);
+static int _length_tunnel(const Dungeon& context, Coordinate *from, Coordinate *to);
 
 static void _init_floor_state(Dungeon &dungeon, Heap<Event> &heap, View &view) {
     for(EIdx i = 1; i <= dungeon.store->size(); i++) {
@@ -93,10 +93,11 @@ bool GameState::monster_move(Monster *entity) {
         //first get the correct distance map
         Distances distance_map;
         if (entity->tunneling) {
-            distance_map = dijkstra(&dungeon, target.row, target.col, _length_tunnel);
+            distance_map = dijkstra(dungeon, target.row, target.col, _length_tunnel);
         } else {
-            distance_map = dijkstra(&dungeon, target.row, target.col, _length_no_tunnel);
+            distance_map = dijkstra(dungeon, target.row, target.col, _length_no_tunnel);
         }
+        
         int lowest = 0;
         for(int i = 0; i < 8; i++) {
             int old_distance = distance_map.d[adjacent[lowest][0]][adjacent[lowest][1]];
@@ -313,10 +314,9 @@ void GameState::move_to(Entity *entity, int to_row, int to_col) {
     entity->col = to_col;
 }
 
-static int _length_no_tunnel(void *context, Coordinate *from, Coordinate *to) {
-    Dungeon *dungeon = (Dungeon *)context;
+static int _length_no_tunnel(const Dungeon& dungeon, Coordinate *from, Coordinate *to) {
     (void)(from);
-    DungeonBlock b_to = dungeon->blocks[to->row][to->col];
+    DungeonBlock b_to = dungeon.blocks[to->row][to->col];
     if (b_to.type == DungeonBlock::ROCK || b_to.type == DungeonBlock::PILLAR) {
         return INT_MAX;
     } else {
@@ -324,10 +324,9 @@ static int _length_no_tunnel(void *context, Coordinate *from, Coordinate *to) {
     }
 }
 
-static int _length_tunnel(void *context, Coordinate *from, Coordinate *to) {
-    Dungeon *dungeon = (Dungeon *)context;
+static int _length_tunnel(const Dungeon& dungeon, Coordinate *from, Coordinate *to) {
     (void)(from);
-    DungeonBlock b_to = dungeon->blocks[to->row][to->col];
+    DungeonBlock b_to = dungeon.blocks[to->row][to->col];
     if (b_to.type == DungeonBlock::ROCK || b_to.type == DungeonBlock::PILLAR) {
         if(b_to.immutable) {
             return INT_MAX;

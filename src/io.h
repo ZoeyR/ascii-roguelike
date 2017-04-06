@@ -14,7 +14,7 @@ int get_input(void);
 
 void print_view(GameState *state, int center_row, int center_col);
 
-void print_dungeon(Dungeon *dungeon, int center_row, int center_col);
+void print_dungeon(const Dungeon *dungeon, int center_row, int center_col);
 
 void print_distance_map(Distances* distances);
 

@@ -113,3 +113,4 @@
 * Generate object from descs
 * Place monsters and objects in dungeon
 * Print updated colors and characters
+* fix distance bug
