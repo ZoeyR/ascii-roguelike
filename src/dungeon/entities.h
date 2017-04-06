@@ -25,8 +25,8 @@ class Player: public Entity {
 
 class Monster: public Entity {
     public:
-        std::string name;
-        std::string color;
+        //std::string name;
+        int color;
         int hp;
         Dice damage;
         bool smart :1;

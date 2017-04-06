@@ -68,7 +68,6 @@ int main(int argc, char *argv[]) {
     }
     destroy_state(state);
     delete state; 
-    exit(0);
     return 0;
 }
 

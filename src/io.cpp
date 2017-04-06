@@ -627,7 +627,7 @@ static void print_entity(Entity *entity, int row, int col) {
     if (is_player(entity)) {
         wattron(game_screen, COLOR_PAIR(5));
     } else {
-        int color = _string_to_color(((Monster *)entity)->color);
+        int color = ((Monster *)entity)->color;
         wattron(game_screen, COLOR_PAIR(color));
     }
     mvwprintw(game_screen, row, col, "%c", entity->print);

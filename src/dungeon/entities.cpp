@@ -55,9 +55,7 @@ EIdx EntityStore::spawn_player(int row, int col) {
 
 EIdx EntityStore::spawn_monster(MonsterDescription& desc, int row, int col) {
     Monster monster(row, col);
-    monster.name = desc.name;
     monster.print = desc.symbol;
-    monster.color = desc.color;
     monster.speed = desc.speed.roll();
     monster.smart = desc.smart;
     monster.telepathic = desc.telepathic;
@@ -66,6 +64,26 @@ EIdx EntityStore::spawn_monster(MonsterDescription& desc, int row, int col) {
     monster.hp = desc.hp.roll();
     monster.damage = desc.damage;
     monster.index = list.size() + 1;
+
+    if (desc.color.compare("RED") == 0) {
+        monster.color =  10;
+    } else if (desc.color.compare("GREEN") == 0) {
+        monster.color =  11;
+    } else if (desc.color.compare("BLUE") == 0) {
+        monster.color =  12;
+    } else if (desc.color.compare("CYAN") == 0) {
+        monster.color =  13;
+    } else if (desc.color.compare("YELLOW") == 0) {
+        monster.color =  14;
+    } else if (desc.color.compare("MAGENTA") == 0) {
+        monster.color =  15;
+    } else if (desc.color.compare("WHITE") == 0) {
+        monster.color =  16;
+    } else if (desc.color.compare("BLACK") == 0) {
+        monster.color =  17;
+    } else {
+        monster.color =  3;
+    }
     list.push_back(std::make_unique<Monster>(monster));
     return monster.index;
 }
@@ -126,10 +144,8 @@ void MonsterDescription::print() {
 }
 
 Monster MonsterDescription::generate(int row, int col) {
-    Monster monster(row, col);
-    monster.name = name;
+     Monster monster(row, col);
     monster.print = symbol;
-    monster.color = color;
     monster.speed = speed.roll();
     monster.smart = smart;
     monster.telepathic = telepathic;
@@ -137,7 +153,26 @@ Monster MonsterDescription::generate(int row, int col) {
     monster.erratic = erratic;
     monster.hp = hp.roll();
     monster.damage = damage;
-    
+
+    if (color.compare("RED") == 0) {
+        monster.color =  10;
+    } else if (color.compare("GREEN") == 0) {
+        monster.color =  11;
+    } else if (color.compare("BLUE") == 0) {
+        monster.color =  12;
+    } else if (color.compare("CYAN") == 0) {
+        monster.color =  13;
+    } else if (color.compare("YELLOW") == 0) {
+        monster.color =  14;
+    } else if (color.compare("MAGENTA") == 0) {
+        monster.color =  15;
+    } else if (color.compare("WHITE") == 0) {
+        monster.color =  16;
+    } else if (color.compare("BLACK") == 0) {
+        monster.color =  17;
+    } else {
+        monster.color =  3;
+    }
     return monster;
 }
 
