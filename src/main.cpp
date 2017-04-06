@@ -5,6 +5,7 @@
 #include <string>
 #include <iostream>
 #include <fstream>
+#include <vector>
 
 #include <dungeon/dungeon.h>
 #include <util/distance.h>
@@ -31,6 +32,7 @@ int main(int argc, char *argv[]) {
     auto object_descriptions = load_object_descriptions(object_file_stream);
 
     std::cout << object_descriptions.size();
+
     Options options = parse_args(argc, argv);
     options.monster_pool = monster_descriptions;
     options.object_pool = object_descriptions;
@@ -46,7 +48,7 @@ int main(int argc, char *argv[]) {
     if (options.load) {
         dungeon = load_dungeon(options.path);
     } else {
-        dungeon = create_dungeon(options);
+        dungeon = create_dungeon(&options);
     }
 
     GameState state = GameState(dungeon);

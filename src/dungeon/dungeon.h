@@ -17,7 +17,8 @@
 #define HARDNESS_TIER_3 220
 #define HARDNESS_TIER_MAX 255
 
-typedef struct {
+class Options {
+    public:
     std::vector<MonsterDescription> monster_pool;
     std::vector<ObjectDescription> object_pool;
     int save;
@@ -31,7 +32,7 @@ typedef struct {
     int windiness;
     int max_maze_size;
     int imperfection;
-} Options;
+};
 
 typedef struct {
     enum Type {
@@ -59,7 +60,7 @@ typedef struct {
 } DungeonRoom;
 
 typedef struct {
-    Options params;
+    Options* params;
     int regions;
     int monster_count;
     EIdx player_id;
@@ -71,7 +72,7 @@ typedef struct {
 // create a new random room with the given paramters. Rooms must be no larget than 25x25
 DungeonRoom create_room(int width, int height);
 
-Dungeon create_dungeon(Options params);
+Dungeon create_dungeon(Options *params);
 
 void rebuild_dungeon(Dungeon *dungeon);
 

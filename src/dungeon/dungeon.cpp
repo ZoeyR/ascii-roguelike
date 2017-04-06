@@ -23,12 +23,12 @@ void destroy_dungeon(Dungeon *dungeon) {
     delete dungeon->o_store;
 }
 
-Dungeon create_dungeon(Options params) {
+Dungeon create_dungeon(Options* params) {
     Dungeon dungeon;
     dungeon.regions = 0;
     dungeon.store = new EntityStore();
     dungeon.o_store = new ObjectStore();
-    dungeon.monster_count = params.monsters;
+    dungeon.monster_count = params->monsters;
     dungeon.params = params;
     // fill dungeon with random noise
     for(int row = 0; row < DUNGEON_HEIGHT; row++) {
@@ -50,12 +50,12 @@ Dungeon create_dungeon(Options params) {
     }
 
     // create veins of hard and soft DungeonBlock::ROCK
-    _generate_veins(&dungeon, params.hardness, 300);
+    _generate_veins(&dungeon, params->hardness, 300);
 
     // generate enough rooms for the dungeon to be reasonably filled
     int rooms = 0;
     int tries = 0;
-    while(rooms < params.min_rooms || tries < params.room_tries) {
+    while(rooms < params->min_rooms || tries < params->room_tries) {
         tries++;
 
         // rooms must be odd sized for the generation algorithm to work
@@ -84,8 +84,8 @@ Dungeon create_dungeon(Options params) {
         }
     }
 
-    int monsters_to_place = params.monsters;
-    while(monsters_to_place > 0 && params.monster_pool.size() > 0) {
+    int monsters_to_place = params->monsters;
+    while(monsters_to_place > 0 && params->monster_pool.size() > 0) {
         int row = better_rand(DUNGEON_HEIGHT - 1);
         int col = better_rand(DUNGEON_WIDTH - 1);
 
@@ -93,7 +93,7 @@ Dungeon create_dungeon(Options params) {
             dungeon.blocks[row][col].type != DungeonBlock::PILLAR &&
             dungeon.blocks[row][col].entity_id == 0) {
             
-            auto monster = params.monster_pool[better_rand(params.monster_pool.size() - 1)].generate(row, col);
+            auto monster = params->monster_pool[better_rand(params->monster_pool.size() - 1)].generate(row, col);
             EIdx id = dungeon.store->add_entity(monster);
             dungeon.blocks[row][col].entity_id = id;
             monsters_to_place--;
@@ -101,7 +101,7 @@ Dungeon create_dungeon(Options params) {
     }
 
     int objects_to_place = 20;
-    while(objects_to_place > 0 && params.object_pool.size() > 0) {
+    while(objects_to_place > 0 && params->object_pool.size() > 0) {
         int row = better_rand(DUNGEON_HEIGHT - 1);
         int col = better_rand(DUNGEON_WIDTH - 1);
 
@@ -109,7 +109,7 @@ Dungeon create_dungeon(Options params) {
             dungeon.blocks[row][col].type != DungeonBlock::PILLAR &&
             dungeon.blocks[row][col].object_id == 0) {
             
-            auto object = params.object_pool[better_rand(params.object_pool.size() - 1)].generate();
+            auto object = params->object_pool[better_rand(params->object_pool.size() - 1)].generate();
             OIdx id = dungeon.o_store->add_object(object);
             dungeon.blocks[row][col].object_id = id;
             objects_to_place--;
@@ -117,12 +117,12 @@ Dungeon create_dungeon(Options params) {
     }
 
     // generate maze
-    _generate_maze(&dungeon, params.windiness, params.max_maze_size);
+    _generate_maze(&dungeon, params->windiness, params->max_maze_size);
 
     // since the maze is now generated rooms can be unfrozen
     _unfreeze_rooms(&dungeon);
 
-    merge_regions(&dungeon, params.imperfection);
+    merge_regions(&dungeon, params->imperfection);
 
     _fill_maze(&dungeon);
 
