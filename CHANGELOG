@@ -114,3 +114,12 @@
 * Place monsters and objects in dungeon
 * Print updated colors and characters
 * fix distance bug
+
+2017-4-13
+---------
+* Implement informational outputs
+* Implement user prompts
+* New combat semantics
+* Fixed crash on floor change due to pointer invalidation
+* Added player inventory
+* Added new speed calculations

@@ -256,7 +256,7 @@ bool GameState::player_move(Player *entity) {
                     break;
                 case 'd':
                     if (dungeon.blocks[entity->row][entity->col].object_id != 0) {
-                        // no space
+                        notify("No space to drop", 1);
                         break;
                     }
                     print_pc_inventory(&dungeon);

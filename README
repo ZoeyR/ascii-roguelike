@@ -1,10 +1,12 @@
-Monster descriptions and object descriptions are parsed from $HOME/.rlg327/monster_desc.txt
-and $HOME/.rlg327/object_desc.txt respectively. These parsed descriptions are used to fill
-the dungeon with monsters and objects based on them.
+The player may now pick up and use objects. new commands implemented are the
+ones specified in the assignment description. The only change is that instead
+of ESC cancelling an inventory operation, any key other than the valid
+selectors will cancel the operation.
 
-Objects and monsters have every dice value apart from damage pre-rolled before generation.
+Since stacks are not implemented, the player is not allowed to drop an item
+when they are already standing on top of one.
 
-None of the new monster abilities have been implemented.
+Combat displays the attacked monsters remaining hp, and the players remaining
+hp. Monster names are not displayed as that was not required.
 
-Currently there is no way to pick up or use objects since it was not part of the assignment
-requirements.
+Player speed has a minimum of 1 to avoid divide by 0 errors.
