@@ -149,8 +149,122 @@ bool GameState::player_move(Player *entity) {
     // loop until a movement is actually made
     while (true) {
         int ch = get_input();
+        int o_index;
+        int open_carry;
         if (control_mode) {
             switch (ch) {
+                case 'i':
+                    print_pc_inventory(&dungeon);
+                    prompt_player("");
+                    break;
+                case 'e':
+                    print_pc_equipment(&dungeon);
+                    prompt_player("");
+                    break;
+                case 'I':
+                    print_pc_inventory(&dungeon);
+                    o_index = prompt_player("Enter a carry slot") - '0';
+                    if (o_index < 0 || o_index > 9) {
+                        // error prompt
+                    } else {
+                        print_item_description(&dungeon, entity->carry[o_index]);
+                        prompt_player("");
+                    }
+                    break;
+                case 'w':
+                    print_pc_inventory(&dungeon);
+                    o_index = prompt_player("Enter a carry slot") - '0';
+                    if (o_index < 0 || o_index > 9) {
+                        // error prompt
+                    } else if (entity->carry[o_index] == 0) {
+                        // do nothing
+                    } else {
+                        Object *obj = dungeon.o_store->get(entity->carry[o_index]).unwrap();
+                        switch (obj->type) {
+                            case ObjectType::WEAPON:
+                                std::swap(entity->carry[o_index], entity->equipment[0]);
+                                break;
+                            case ObjectType::OFFHAND:
+                                std::swap(entity->carry[o_index], entity->equipment[1]);
+                                break;
+                            case ObjectType::RANGED:
+                                std::swap(entity->carry[o_index], entity->equipment[2]);
+                                break;
+                            case ObjectType::ARMOR:
+                                std::swap(entity->carry[o_index], entity->equipment[3]);
+                                break;
+                            case ObjectType::HELMET:
+                                std::swap(entity->carry[o_index], entity->equipment[4]);
+                                break;
+                            case ObjectType::CLOAK:
+                                std::swap(entity->carry[o_index], entity->equipment[5]);
+                                break;
+                            case ObjectType::GLOVES:
+                                std::swap(entity->carry[o_index], entity->equipment[6]);
+                                break;
+                            case ObjectType::BOOTS:
+                                std::swap(entity->carry[o_index], entity->equipment[7]);
+                                break;
+                            case ObjectType::AMULET:
+                                std::swap(entity->carry[o_index], entity->equipment[8]);
+                                break;
+                            case ObjectType::LIGHT:
+                                std::swap(entity->carry[o_index], entity->equipment[9]);
+                                break;
+                            case ObjectType::RING:
+                                if (entity->equipment[10] == 0) {
+                                    std::swap(entity->carry[o_index], entity->equipment[10]);
+                                } else {
+                                    std::swap(entity->carry[o_index], entity->equipment[11]);
+                                }
+                                break;
+                        }
+                    }
+                    break;
+                case 't':
+                    open_carry = -1;
+                    for(int i = 0; i < 10; i++) {
+                        if (entity->carry[i] == 0) {
+                            open_carry = i;
+                            break;
+                        }
+                    }
+                    if (open_carry == -1) {
+                        // danger! danger!
+                        break;
+                    }
+                    print_pc_equipment(&dungeon);
+                    o_index = prompt_player("Enter equipment slot") - 'a';
+
+                    if (o_index < 0 || o_index > 11) {
+                        // danger! danger!
+                        break;
+                    }
+                    std::swap(entity->carry[open_carry], entity->equipment[o_index]);
+                    break;
+                case 'd':
+                    if (dungeon.blocks[entity->row][entity->col].object_id != 0) {
+                        // no space
+                        break;
+                    }
+                    print_pc_inventory(&dungeon);
+                    o_index = prompt_player("Enter a carry slot") - '0';
+                    
+                    if (o_index < 0 || o_index > 9) {
+                        // error prompt
+                        break;
+                    }
+                    std::swap(dungeon.blocks[entity->row][entity->col].object_id, entity->carry[o_index]);
+                    break;
+                case 'x':
+                    print_pc_inventory(&dungeon);
+                    o_index = prompt_player("Enter a carry slot") - '0';
+                    if (o_index < 0 || o_index > 9) {
+                        // error prompt
+                        break;
+                    }
+                    entity->carry[o_index] = 0;
+                    break;
                 case 'y':
                 case '7':
                     move_to(entity, top, left);
@@ -201,6 +315,11 @@ bool GameState::player_move(Player *entity) {
                     break;
                 case 'Q':
                     exit(0);
+            }
+            if (debug) {
+                print_dungeon(&dungeon, view_row, view_col);
+            } else {
+                print_view(this, view_row, view_col);
             }
         } else {
             switch (ch) {
@@ -291,7 +410,35 @@ bool GameState::can_see(Coord a, Coord b) {
     }
 }
 
-void GameState::move_to(Entity *entity, int to_row, int to_col) {
+void GameState::move_to(Player *entity, int to_row, int to_col) {
+    if (dungeon.blocks[to_row][to_col].type == DungeonBlock::ROCK ||
+        dungeon.blocks[to_row][to_col].type == DungeonBlock::PILLAR) {
+            return;
+    }
+    int row = entity->row;
+    int col = entity->col;
+    dungeon.blocks[row][col].entity_id = 0;
+
+    // new combat semantics
+
+    dungeon.blocks[to_row][to_col].entity_id = entity->index;
+    
+    // search for open carry slots
+    if (dungeon.blocks[to_row][to_col].object_id != 0) {
+        for(int i = 0; i < 10; i++) {
+            if (entity->carry[i] == 0) {
+                entity->carry[i] = dungeon.blocks[to_row][to_col].object_id;
+                dungeon.blocks[to_row][to_col].object_id = 0;
+                break;
+            }
+        }
+    }
+
+    entity->row = to_row;
+    entity->col = to_col;
+}
+
+void GameState::move_to(Monster *entity, int to_row, int to_col) {
     if (dungeon.blocks[to_row][to_col].type == DungeonBlock::ROCK ||
         dungeon.blocks[to_row][to_col].type == DungeonBlock::PILLAR) {
             return;

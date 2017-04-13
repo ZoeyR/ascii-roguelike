@@ -70,6 +70,7 @@ void init_screen(bool full_size) {
     init_pair(4, COLOR_RED, COLOR_BLACK);
     init_pair(5, COLOR_GREEN, COLOR_BLACK);
     init_pair(6, COLOR_BLACK, COLOR_BLUE);
+    init_pair(7, COLOR_WHITE, COLOR_BLUE);
 
     // OBJECT AND MONSTER COLOR DEFS
     init_pair(10, COLOR_RED, COLOR_BLACK);
@@ -186,6 +187,58 @@ void print_dungeon(const Dungeon *dungeon, int center_row, int center_col) {
     }
     box(game_screen, 0, 0);
     wrefresh(main_screen);
+}
+
+void print_pc_inventory(Dungeon *dungeon) {
+    wbkgd(main_screen, COLOR_PAIR(2));
+    wclear(main_screen);
+    for(int i = 0; i < 10; i++) {
+        OIdx o_index = static_cast<Player *>(dungeon->store->get(dungeon->player_id).unwrap())->carry[i];
+        if (o_index == 0) {
+            mvwprintw(main_screen, i*2, 0, "%d) Empty", i);
+        } else {
+            Object* obj = dungeon->o_store->get(o_index).unwrap();
+            mvwprintw(main_screen, i*2, 0, "%d) %s DAM: %s", i, obj->name.c_str(), obj->damage_bonus.print().c_str());
+        }
+    }
+    wrefresh(main_screen);
+}
+
+void print_pc_equipment(Dungeon *dungeon) {
+    wbkgd(main_screen, COLOR_PAIR(2));
+    wclear(main_screen);
+    for(int i = 0; i < 12; i++) {
+        OIdx o_index = static_cast<Player *>(dungeon->store->get(dungeon->player_id).unwrap())->equipment[i];
+        if (o_index == 0) {
+            mvwprintw(main_screen, i*2, 0, "%c) Empty", 'a' + i);
+        } else {
+            Object* obj = dungeon->o_store->get(o_index).unwrap();
+            mvwprintw(main_screen, i*2, 0, "%c) %s DAM: %s", 'a' + i, obj->name.c_str(), obj->damage_bonus.print().c_str());
+        }
+    }
+    wrefresh(main_screen);
+}
+
+void print_item_description(Dungeon *dungeon, OIdx index) {
+    wbkgd(main_screen, COLOR_PAIR(2));
+    wclear(main_screen);
+    if (index == 0) {
+        mvwprintw(main_screen, 0, 0, "You have no item here");
+    } else {
+        Object *obj = dungeon->o_store->get(index).unwrap();
+        mvwprintw(main_screen, 0, 0, "%s", obj->description.c_str());
+    }
+
+    wrefresh(main_screen);
+}
+
+int prompt_player(const char* prompt) {
+    wattron(main_screen, COLOR_PAIR(7));
+    mvwprintw(main_screen, SCREEN_ROWS - 2, 0, "%s: ", prompt);
+    wrefresh(main_screen);
+    int ch = get_input();
+    wclear(main_screen);
+    return ch;
 }
 
 static bool _load_monster(std::istream& is, MonsterDescription& desc) {

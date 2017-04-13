@@ -48,9 +48,13 @@ bool Dice::parse_str(std::string& str) {
     return ret == 3;
 }
 
-void Dice::print() {
-    using namespace std;
-    cout << base << "+" << num << "d" << sides << endl;
+std::string Dice::print() {
+    std::string ret = std::to_string(base);
+    ret += "+";
+    ret += std::to_string(num);
+    ret += "d";
+    ret += std::to_string(sides);
+    return ret;
 }
 
 int Dice::roll() {

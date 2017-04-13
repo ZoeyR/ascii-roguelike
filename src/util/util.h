@@ -69,7 +69,7 @@ class Dice {
         Dice();
         int roll();
         bool parse_str(std::string& str);
-        void print();
+        std::string print();
 };
 
 #endif

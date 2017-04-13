@@ -36,6 +36,12 @@ Monster::Monster(int row, int col): Entity::Entity(row, col) {
 void Entity::no_op() {}
 
 Player::Player(int row, int col): Entity::Entity(row, col) {
+    for(int i = 0; i < 10; i++) {
+        carry[i] = 0;
+    }
+    for(int i = 0; i < 12; i++) {
+        equipment[i] = 0;
+    }
     speed = 10;
     print = '@';
 }
@@ -144,7 +150,7 @@ void MonsterDescription::print() {
 }
 
 Monster MonsterDescription::generate(int row, int col) {
-     Monster monster(row, col);
+    Monster monster(row, col);
     monster.print = symbol;
     monster.speed = speed.roll();
     monster.smart = smart;

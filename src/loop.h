@@ -27,7 +27,8 @@ class GameState {
 
     bool monster_move(Monster *entity);
     bool player_move(Player *entity);
-    void move_to(Entity *entity, int row, int col);
+    void move_to(Player *entity, int row, int col);
+    void move_to(Monster *entity, int row, int col);
     Coord get_target(Monster *entity);
     bool can_see(Coord a, Coord b);
     void new_floor();

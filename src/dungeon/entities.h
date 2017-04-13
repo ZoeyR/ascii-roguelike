@@ -4,11 +4,13 @@
 #include <vector>
 #include <memory>
 #include <util/util.h>
+#include <dungeon/object.h>
 typedef size_t EIdx;
 
 class Entity {
     virtual void no_op();
     public:
+        int hp;
         bool alive;
         int row;
         int col;
@@ -18,8 +20,25 @@ class Entity {
         Entity(int row, int col);
 };
 
+enum class EquipmentSelector {
+    Weapon,
+    OffHand,
+    Ranged,
+    Armor,
+    Helmet,
+    Cloak,
+    Gloves,
+    Boots,
+    Amulet,
+    Light,
+    RingA,
+    RingB
+};
+
 class Player: public Entity {
     public:
+        OIdx carry[10];
+        OIdx equipment[12];
         Player(int row, int col);
 };
 
@@ -27,7 +46,6 @@ class Monster: public Entity {
     public:
         //std::string name;
         int color;
-        int hp;
         Dice damage;
         bool smart :1;
         bool telepathic :1;
