@@ -455,7 +455,7 @@ void GameState::move_to(Player *player, int to_row, int to_col) {
             notice += " damage: ";
             notice += std::to_string(entity->hp);
             notice += "remaining";
-            notify(notice.c_str());
+            notify(notice.c_str(), 2);
             if (entity->hp < 0) {
                 entity->alive = false;
                 dungeon.blocks[to_row][to_col].entity_id = player->index;
@@ -504,7 +504,7 @@ void GameState::move_to(Monster *monster, int to_row, int to_col) {
             notice += " damage: ";
             notice += std::to_string(entity->hp);
             notice += "remaining";
-            notify(notice.c_str());
+            notify(notice.c_str(), 1);
             if (entity->hp < 0) {
                 entity->alive = false;
                 dungeon.blocks[to_row][to_col].entity_id = monster->index;

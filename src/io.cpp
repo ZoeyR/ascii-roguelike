@@ -241,9 +241,9 @@ int prompt_player(const char* prompt) {
     return ch;
 }
 
-void notify(const char* prompt) {
+void notify(const char* prompt, int row_off) {
     wattron(main_screen, COLOR_PAIR(7));
-    mvwprintw(main_screen, SCREEN_ROWS - 1, 0, "%s: ", prompt);
+    mvwprintw(main_screen, SCREEN_ROWS - row_off, 0, "%s: ", prompt);
     wrefresh(main_screen);
 }
 
