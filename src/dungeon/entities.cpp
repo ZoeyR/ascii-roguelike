@@ -42,6 +42,8 @@ Player::Player(int row, int col): Entity::Entity(row, col) {
     for(int i = 0; i < 12; i++) {
         equipment[i] = 0;
     }
+    hp = 300;
+    base_damage.parse_str("0+1d4");
     speed = 10;
     print = '@';
 }

@@ -410,55 +410,107 @@ bool GameState::can_see(Coord a, Coord b) {
     }
 }
 
-void GameState::move_to(Player *entity, int to_row, int to_col) {
+void GameState::move_to(Player *player, int to_row, int to_col) {
     if (dungeon.blocks[to_row][to_col].type == DungeonBlock::ROCK ||
         dungeon.blocks[to_row][to_col].type == DungeonBlock::PILLAR) {
             return;
     }
-    int row = entity->row;
-    int col = entity->col;
-    dungeon.blocks[row][col].entity_id = 0;
+    int row = player->row;
+    int col = player->col;
 
     // new combat semantics
+    if (dungeon.blocks[to_row][to_col].entity_id != 0 && dungeon.blocks[to_row][to_col].entity_id != player->index) {
+        Entity *entity = dungeon.store->get(dungeon.blocks[to_row][to_col].entity_id).unwrap();
+        if (!is_player(entity)) {
 
-    dungeon.blocks[to_row][to_col].entity_id = entity->index;
+            // the entity is a monster, ATTACK!
+            int damage = 0;
+            if (player->equipment[0] == 0) {
+                // no weapon, do base damage
+                damage += player->base_damage.roll();
+            }
+            // roll all items
+            for(int i = 0; i < 12; i++) {
+                OIdx o_index = player->equipment[i];
+                if (o_index != 0) {
+                    Object *obj = dungeon.o_store->get(o_index).unwrap();
+                    damage += obj->damage_bonus.roll();
+                }
+            }
+            entity->hp -= damage;
+            std::string notice = "Did ";
+            notice += std::to_string(damage);
+            notice += " damage: ";
+            notice += std::to_string(entity->hp);
+            notice += "remaining";
+            notify(notice.c_str());
+            if (entity->hp < 0) {
+                entity->alive = false;
+                dungeon.blocks[to_row][to_col].entity_id = player->index;
+                player->row = to_row;
+                player->col = to_col;
+                dungeon.monster_count--;
+            }
+        } else {
+            // Okay, so this really, REALLY shouldnt happen, so lets just ignore it
+        }
+    } else {
+        std::swap(dungeon.blocks[to_row][to_col].entity_id, dungeon.blocks[row][col].entity_id);
+        player->row = to_row;
+        player->col = to_col;
+    }
     
     // search for open carry slots
     if (dungeon.blocks[to_row][to_col].object_id != 0) {
         for(int i = 0; i < 10; i++) {
-            if (entity->carry[i] == 0) {
-                entity->carry[i] = dungeon.blocks[to_row][to_col].object_id;
+            if (player->carry[i] == 0) {
+                player->carry[i] = dungeon.blocks[to_row][to_col].object_id;
                 dungeon.blocks[to_row][to_col].object_id = 0;
                 break;
             }
         }
     }
-
-    entity->row = to_row;
-    entity->col = to_col;
 }
 
-void GameState::move_to(Monster *entity, int to_row, int to_col) {
+void GameState::move_to(Monster *monster, int to_row, int to_col) {
     if (dungeon.blocks[to_row][to_col].type == DungeonBlock::ROCK ||
         dungeon.blocks[to_row][to_col].type == DungeonBlock::PILLAR) {
             return;
     }
-    int row = entity->row;
-    int col = entity->col;
-    dungeon.blocks[row][col].entity_id = 0;
+    int row = monster->row;
+    int col = monster->col;
 
-    // check if we have killed something
-    if (dungeon.blocks[to_row][to_col].entity_id != 0 && dungeon.blocks[to_row][to_col].entity_id != entity->index) {
+    // check if something is in our way
+    if (dungeon.blocks[to_row][to_col].entity_id != 0 && dungeon.blocks[to_row][to_col].entity_id != monster->index) {
         Entity *entity = dungeon.store->get(dungeon.blocks[to_row][to_col].entity_id).unwrap();
-        entity->alive = false;
-        if (!is_player(entity)) {
-            dungeon.monster_count--;
+        if (is_player(entity)) {
+            // the entity is a player, ATTACK!
+            int damage = monster->damage.roll();
+            entity->hp -= damage;
+            std::string notice = "Attacked for ";
+            notice += std::to_string(damage);
+            notice += " damage: ";
+            notice += std::to_string(entity->hp);
+            notice += "remaining";
+            notify(notice.c_str());
+            if (entity->hp < 0) {
+                entity->alive = false;
+                dungeon.blocks[to_row][to_col].entity_id = monster->index;
+                monster->row = to_row;
+                monster->col = to_col;
+            }
+        } else {
+            std::swap(dungeon.blocks[to_row][to_col].entity_id, dungeon.blocks[row][col].entity_id);
+            monster->row = to_row;
+            monster->col = to_col;
+            entity->row = row;
+            entity->col = col;
         }
+    } else {
+        std::swap(dungeon.blocks[to_row][to_col].entity_id, dungeon.blocks[row][col].entity_id);
+            monster->row = to_row;
+            monster->col = to_col;
     }
-    dungeon.blocks[to_row][to_col].entity_id = entity->index;
-
-    entity->row = to_row;
-    entity->col = to_col;
 }
 
 static int _length_no_tunnel(const Dungeon& dungeon, Coordinate *from, Coordinate *to) {

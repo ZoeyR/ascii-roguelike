@@ -68,7 +68,7 @@ class Dice {
         int sides;
         Dice();
         int roll();
-        bool parse_str(std::string& str);
+        bool parse_str(std::string const& str);
         std::string print();
 };
 

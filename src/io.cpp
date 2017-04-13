@@ -241,6 +241,12 @@ int prompt_player(const char* prompt) {
     return ch;
 }
 
+void notify(const char* prompt) {
+    wattron(main_screen, COLOR_PAIR(7));
+    mvwprintw(main_screen, SCREEN_ROWS - 1, 0, "%s: ", prompt);
+    wrefresh(main_screen);
+}
+
 static bool _load_monster(std::istream& is, MonsterDescription& desc) {
     std::string read;
     int parameters_read = 0;

@@ -92,7 +92,7 @@ annoying.
 SPEED 30+0d1
 COLOR RED
 NAME Software Bug
-DAM 0+0d1
+DAM 0+1d1
 HP 100000+0d1
 ABIL SMART TELE
 END
@@ -230,7 +230,7 @@ COLOR RED
 SPEED 40+0d1
 ABIL PICKUP TELE SMART
 HP 200+0d1
-DAM 0+0d1
+DAM 0+1d1
 NAME River Crab
 DESC
 It's a fresh-water crustacean that just wants everybody to get along.

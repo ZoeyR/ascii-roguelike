@@ -43,7 +43,7 @@ unsigned long
   return x/bin_size;
 }
 
-bool Dice::parse_str(std::string& str) {
+bool Dice::parse_str(std::string const& str) {
     auto ret = sscanf(str.c_str(), "%d+%dd%d", &base, &num, &sides);
     return ret == 3;
 }

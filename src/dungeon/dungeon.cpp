@@ -101,6 +101,12 @@ Dungeon create_dungeon(Options* params) {
         }
     }
 
+    // the object store will be universal across floors, since objects are essentially immutable.
+    for(size_t i = 0; i < params->object_pool.size(); i++) {
+        auto object = params->object_pool[i].generate();
+        dungeon.o_store->add_object(object);
+    }
+
     int objects_to_place = 20;
     while(objects_to_place > 0 && params->object_pool.size() > 0) {
         int row = better_rand(DUNGEON_HEIGHT - 1);
@@ -110,8 +116,7 @@ Dungeon create_dungeon(Options* params) {
             dungeon.blocks[row][col].type != DungeonBlock::PILLAR &&
             dungeon.blocks[row][col].object_id == 0) {
             
-            auto object = params->object_pool[better_rand(params->object_pool.size() - 1)].generate();
-            OIdx id = dungeon.o_store->add_object(object);
+            OIdx id = better_rand(dungeon.o_store->size() - 1) + 1;
             dungeon.blocks[row][col].object_id = id;
             objects_to_place--;
         }

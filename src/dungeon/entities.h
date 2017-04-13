@@ -37,6 +37,7 @@ enum class EquipmentSelector {
 
 class Player: public Entity {
     public:
+        Dice base_damage;
         OIdx carry[10];
         OIdx equipment[12];
         Player(int row, int col);

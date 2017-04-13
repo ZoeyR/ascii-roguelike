@@ -27,6 +27,8 @@ void print_item_description(Dungeon *dungeon, OIdx index);
 
 int prompt_player(const char* prompt);
 
+void notify(const char* prompt);
+
 void save_dungeon(Dungeon *dungeon, char *path);
 
 Dungeon load_dungeon(char *path);
