@@ -32,8 +32,6 @@ int main(int argc, char *argv[]) {
     std::ifstream object_file_stream(object_path, std::ifstream::in); 
     auto object_descriptions = load_object_descriptions(object_file_stream);
 
-    std::cout << object_descriptions.size();
-
     Options options = parse_args(argc, argv);
     options.monster_pool = monster_descriptions;
     options.object_pool = object_descriptions;
@@ -58,7 +56,7 @@ int main(int argc, char *argv[]) {
         print_view(state, player->row, player->col);
         state->tick();
         if (!state->dungeon.store->get(state->dungeon.player_id).unwrap()->alive) {
-            printf("Player loses :(\n");
+            std::cout <<"Player loses :(" << std::endl;
             break;
         } 
     }

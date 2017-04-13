@@ -149,13 +149,14 @@ Dungeon create_dungeon(Options* params) {
     }
 
     // place an upward staircase
-    while(1) {
+    int x = 30;
+    while(x > 0) {
         int row = better_rand(DUNGEON_HEIGHT - 1);
         int col = better_rand(DUNGEON_WIDTH - 1);
 
         if (dungeon.blocks[row][col].type == DungeonBlock::FLOOR) {
             dungeon.blocks[row][col].type = DungeonBlock::UPSTAIRS;
-            break;
+            x--;
         }
     }
 
@@ -168,7 +169,6 @@ Dungeon create_dungeon(Options* params) {
             break;
         }
     }
-
     return dungeon;
 }
 

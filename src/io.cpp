@@ -252,23 +252,23 @@ static bool _load_monster(std::istream& is, MonsterDescription& desc) {
     int parameters_read = 0;
 
     std::getline(is, read);
-    std::cout << "read: " << read << std::endl;
+    //std::cout << "read: " << read << std::endl;
     if (read.compare("BEGIN MONSTER") != 0) {
         return false;
     }
 
     std::getline(is, read);
     while (read.compare("END") != 0) {
-        std::cout << "read: " << read << read.compare("DESC") << std::endl;
+        //std::cout << "read: " << read << read.compare("DESC") << std::endl;
         if (read.compare(0, 4, "NAME") == 0) {
-            std::cout << "setting name" << std::endl;
+            //std::cout << "setting name" << std::endl;
             desc.name = read.substr(read.find_first_not_of(' ', 4), std::string::npos);
             parameters_read++;
         } else if (read.compare(0, 4, "SYMB") == 0) {
             desc.symbol = read[5];
             parameters_read++;
         } else if (read.compare(0, 4, "DESC") == 0) {
-            std::cout << "description line: " << std::endl;
+            //std::cout << "description line: " << std::endl;
             std::getline(is, read);
             while(read.compare(".") != 0) {
                 if (read.length() > 77) {
@@ -294,7 +294,7 @@ static bool _load_monster(std::istream& is, MonsterDescription& desc) {
 
             std::string ability;
             while(std::getline(ss, ability, ' ')) {
-                std::cout << "ability: " << ability << std::endl;
+                //std::cout << "ability: " << ability << std::endl;
                 if (ability.compare("SMART") == 0) {
                     desc.smart = true;
                 } else if (ability.compare("TELE") == 0) {
@@ -331,7 +331,7 @@ static bool _load_monster(std::istream& is, MonsterDescription& desc) {
         }
         std::getline(is, read);
     }
-    std::cout << "done with while, read:" << read << std::endl;
+    //std::cout << "done with while, read:" << read << std::endl;
 
     if (parameters_read != 8) {
         return false;
@@ -350,11 +350,11 @@ std::vector<MonsterDescription> load_desciptions(std::istream& is) {
     }
 
     while (!is.eof()) {
-        std::cout << "reading monster" << std::endl;
+        //std::cout << "reading monster" << std::endl;
         std::getline(is, desc_header);
         MonsterDescription desc;
         auto succ = _load_monster(is, desc);
-        std::cout << "read monster" << std::endl;
+        //std::cout << "read monster" << std::endl;
         if (!succ) {
             continue;
         }
@@ -370,7 +370,7 @@ static bool _load_object(std::istream& is, ObjectDescription& desc) {
     int parameters_read = 0;
 
     std::getline(is, read);
-    std::cout << "read: " << read << std::endl;
+    //std::cout << "read: " << read << std::endl;
     if (read.compare("BEGIN OBJECT") != 0) {
         return false;
     }
@@ -455,7 +455,7 @@ static bool _load_object(std::istream& is, ObjectDescription& desc) {
         }
         std::getline(is, read);
     }
-    std::cout << "done with while, read:" << parameters_read << std::endl;
+    //std::cout << "done with while, read:" << parameters_read << std::endl;
 
     if (parameters_read != 12) {
         return false;
@@ -474,18 +474,18 @@ std::vector<ObjectDescription> load_object_descriptions(std::istream& is) {
     }
 
     while (!is.eof()) {
-        std::cout << "reading object" << std::endl;
+        //std::cout << "reading object" << std::endl;
         //std::getline(is, desc_header);
         ObjectDescription desc;
         auto succ = _load_object(is, desc);
-        std::cout << "read object" << std::endl;
+        //std::cout << "read object" << std::endl;
         if (!succ) {
             continue;
         }
 
         descs.push_back(desc);
     }
-    std::cout << "read " << descs.size() << " objects" << std::endl;
+    //std::cout << "read " << descs.size() << " objects" << std::endl;
     return descs;
 }
 

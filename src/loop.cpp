@@ -69,8 +69,7 @@ bool GameState::tick() {
         }
     }
     update_player_view();
-
-    return is_player(entity);
+    return false;
 }
 
 bool GameState::monster_move(Monster *entity) {
