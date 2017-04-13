@@ -59,7 +59,20 @@ bool GameState::tick() {
     }
 
     if (!rebuilt) {
-        event.turn = event.turn + 1000/entity->speed;
+        int speed = entity->speed;
+        if (is_player(entity)) {
+            Player *player = static_cast<Player *>(entity);
+            for(int i = 0; i < 12; i++) {
+                OIdx o_index = player->equipment[i];
+                if (o_index != 0) {
+                    speed += dungeon.o_store->get(o_index).unwrap()->speed_bonus;
+                }
+            }
+        }
+        if (speed < 1) {
+            speed = 1;
+        }
+        event.turn = event.turn + 1000/speed;
         event_queue.push(event);
     } else {
         for(int row = 0; row < DUNGEON_HEIGHT; row++) {
